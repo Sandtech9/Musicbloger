@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en" data-skin="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zambian Artists Directory & Discographies | ZedHits</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+    :root {
+        --zp-primary: #06801e;
+        --zp-primary-hover: #006200;
+        --zp-primary-dark: #00e676;
+        --zp-bg: #f7f8f8;
+        --zp-bg-card: #ffffff;
+        --zp-bg-nav: #ffffff;
+        --zp-text: #2c2f34;
+        --zp-text-muted: #74787e;
+        --zp-heading: #1e2022;
+        --zp-border: #e6e8eb;
+        --zp-border-subtle: #f0f2f4;
+        --zp-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        --zp-radius-sm: 4px;
+        --zp-radius-md: 8px;
+        --zp-radius-lg: 12px;
+        --zp-radius-pill: 999px;
+    }
+
+    [data-skin="dark"] {
+        --zp-primary: #00e676;
+        --zp-primary-hover: #00c853;
+        --zp-bg: #0a0d14;
+        --zp-bg-card: #131824;
+        --zp-bg-nav: #0f141f;
+        --zp-text: #cbd5e1;
+        --zp-text-muted: #94a3b8;
+        --zp-heading: #ffffff;
+        --zp-border: rgba(255, 255, 255, 0.08);
+        --zp-border-subtle: rgba(255, 255, 255, 0.04);
+        --zp-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+    body { background-color: var(--zp-bg); color: var(--zp-text); font-size: 14px; line-height: 1.6; transition: background-color 0.25s ease, color 0.25s ease; padding-bottom: 70px; }
+    a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
+    a:hover { color: var(--zp-primary); }
+
+    /* Top Promo Headspace Bar */
+    .zp-top-promo {
+        background: linear-gradient(90deg, #111b21 0%, #1f2c34 100%);
+        color: #e9edef;
+        padding: 8px 1.5rem;
+        font-size: 0.82rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .zp-top-promo-actions { display: flex; align-items: center; gap: 0.8rem; }
+    .btn-top-wa { background: #25D366; color: #ffffff; padding: 4px 12px; border-radius: var(--zp-radius-pill); font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 5px; }
+    .btn-top-wa:hover { background: #20ba5a; color: #fff; }
+    .btn-top-call { background: rgba(255,255,255,0.12); color: #fff; padding: 4px 12px; border-radius: var(--zp-radius-pill); font-weight: 600; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 5px; }
+
+    /* Header Logo Row */
+    .zp-header-logo-row {
+        background-color: var(--zp-bg-nav);
+        border-bottom: 1px solid var(--zp-border);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .zp-logo-link { display: flex; align-items: center; gap: 0.8rem; text-decoration: none; }
+    .zp-logo-img { max-height: 48px; object-fit: contain; }
+    .zp-logo-text { font-size: 1.85rem; font-weight: 800; letter-spacing: -0.5px; color: var(--zp-heading); }
+    .zp-logo-badge { background-color: var(--zp-primary); color: #ffffff; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; padding: 2px 7px; border-radius: var(--zp-radius-pill); margin-left: 6px; }
+
+    /* Sticky Main Navigation */
+    .zp-sticky-nav {
+        background-color: var(--zp-bg-nav);
+        border-bottom: 1px solid var(--zp-border);
+        position: sticky;
+        top: 0;
+        z-index: 999;
+        box-shadow: var(--zp-shadow);
+    }
+    .zp-nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 52px;
+    }
+    .zp-menu-links { display: flex; list-style: none; gap: 1.8rem; align-items: center; }
+    .zp-menu-item { font-size: 0.86rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: var(--zp-heading); }
+    .zp-menu-item.active a, .zp-menu-item a:hover { color: var(--zp-primary); }
+    .zp-nav-actions { display: flex; align-items: center; gap: 0.8rem; }
+    .zp-theme-toggle { background: var(--zp-border-subtle); border: 1px solid var(--zp-border); color: var(--zp-text); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
+    .zp-theme-toggle:hover { background: var(--zp-primary); color: #ffffff; }
+
+    /* Mobile Bottom Navigation Dock */
+    .zp-mobile-nav {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--zp-bg-nav);
+        border-top: 1px solid var(--zp-border);
+        box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        padding: 6px 0;
+    }
+    .zp-mobile-nav ul { display: flex; list-style: none; justify-content: space-around; align-items: center; }
+    .zp-mobile-nav li a { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--zp-text-muted); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; }
+    .zp-mobile-nav li.active a, .zp-mobile-nav li a:hover { color: var(--zp-primary); }
+    .zp-mobile-nav svg { width: 20px; height: 20px; fill: currentColor; }
+
+    @media (max-width: 768px) {
+        .zp-mobile-nav { display: block; }
+        .zp-menu-links { display: none; }
+    }
+
+    /* Main Container Layout */
+    .zp-container { max-width: 1200px; margin: 1.5rem auto; padding: 0 1.2rem; }
+
+    /* 3-Slide Featured Hero Showcase - Dynamic & Responsive */
+    .zp-hero-slider { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-bottom: 2rem; border-radius: var(--zp-radius-lg); }
+    @media (max-width: 900px) { .zp-hero-slider { grid-template-columns: 1fr; gap: 12px; } }
+    .zp-hero-slide { position: relative; min-height: 250px; background-size: cover; background-position: center; border-radius: var(--zp-radius-md); overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: var(--zp-shadow); border: 1px solid var(--zp-border); }
+    .zp-hero-slide:first-child { min-height: 350px; }
+    @media (max-width: 900px) { .zp-hero-slide, .zp-hero-slide:first-child { min-height: 220px; } }
+    .zp-hero-slide:hover { transform: translateY(-3px); border-color: var(--zp-primary); box-shadow: 0 12px 28px rgba(0,0,0,0.3); }
+    .zp-hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0.92) 100%); padding: 1.3rem; display: flex; flex-direction: column; justify-content: flex-end; }
+    .zp-hero-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+    .zp-hero-cat { display: inline-flex; align-items: center; background-color: var(--zp-primary); color: #ffffff; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; padding: 3px 10px; border-radius: var(--zp-radius-pill); width: fit-content; letter-spacing: 0.5px; }
+    .zp-hero-title { color: #ffffff; font-size: 1.15rem; font-weight: 800; line-height: 1.25; text-shadow: 0 2px 6px rgba(0,0,0,0.7); text-decoration: none; margin-bottom: 0.4rem; transition: color 0.2s; }
+    .zp-hero-title:hover { color: var(--zp-primary); }
+    .zp-hero-slide:first-child .zp-hero-title { font-size: 1.55rem; }
+    @media (max-width: 600px) { .zp-hero-slide:first-child .zp-hero-title { font-size: 1.25rem; } }
+    .zp-hero-bottom-row { display: flex; align-items: center; justify-content: space-between; margin-top: 0.4rem; }
+    .zp-hero-meta { color: rgba(255,255,255,0.85); font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .zp-hero-play-btn { width: 38px; height: 38px; border-radius: 50%; background: var(--zp-primary); color: #ffffff; border: none; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0, 230, 118, 0.4); flex-shrink: 0; }
+    .zp-hero-play-btn:hover { transform: scale(1.1); background-color: var(--zp-primary-hover); }
+
+    /* 2-Column Grid Layout: Main Left (68%) & Sidebar Right (32%) */
+    .zp-main-layout { display: grid; grid-template-columns: 68% 32%; gap: 2rem; }
+    @media (max-width: 950px) { .zp-main-layout { grid-template-columns: 1fr; } }
+
+    /* Magazine Block Title */
+    .zp-mag-box-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--zp-border); padding-bottom: 0.6rem; margin-bottom: 1.2rem; }
+    .zp-mag-box-title { font-size: 1.15rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--zp-heading); position: relative; }
+    .zp-mag-box-title::after { content: ''; position: absolute; bottom: -0.68rem; left: 0; width: 60px; height: 3px; background-color: var(--zp-primary); border-radius: 2px; }
+
+    /* Genre Filter Chips - Auto-Adjusting Responsive Grid */
+    .zp-filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; margin-bottom: 1.2rem; }
+    .zp-filter-chip { background-color: var(--zp-bg-card); border: 1px solid var(--zp-border); color: var(--zp-text); font-size: 0.76rem; font-weight: 700; text-transform: uppercase; padding: 0.32rem 0.8rem; border-radius: var(--zp-radius-pill); white-space: nowrap; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; }
+    .zp-filter-chip.active, .zp-filter-chip:hover { background-color: var(--zp-primary); color: #ffffff; border-color: var(--zp-primary); }
+
+    /* Prominent Real-Time Search Bar */
+    .zp-search-wrapper { margin-bottom: 1.2rem; width: 100%; }
+    .zp-search-box { position: relative; display: flex; align-items: center; width: 100%; background: var(--zp-bg-card); border: 2px solid var(--zp-border); border-radius: var(--zp-radius-pill); padding: 0.2rem 0.6rem 0.2rem 1.1rem; transition: all 0.25s ease; box-shadow: var(--zp-shadow); }
+    .zp-search-box:focus-within { border-color: var(--zp-primary); box-shadow: 0 0 0 4px rgba(0, 230, 118, 0.15); }
+    .zp-search-icon { color: var(--zp-text-muted); font-size: 0.95rem; margin-right: 0.75rem; transition: color 0.2s; }
+    .zp-search-box:focus-within .zp-search-icon { color: var(--zp-primary); }
+    .zp-search-input { flex: 1; background: transparent; border: none; outline: none; font-size: 0.92rem; font-weight: 600; color: var(--zp-text); padding: 0.55rem 0; width: 100%; font-family: inherit; }
+    .zp-search-input::placeholder { color: var(--zp-text-muted); font-weight: 500; }
+    .zp-search-clear { background: var(--zp-border-subtle); border: none; color: var(--zp-text-muted); width: 26px; height: 26px; border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; font-size: 0.75rem; margin-left: 0.5rem; transition: all 0.2s; }
+    .zp-search-clear:hover { background: #ff5252; color: #ffffff; }
+    .zp-search-highlight { background: rgba(0, 230, 118, 0.25); color: inherit; padding: 1px 3px; border-radius: 3px; font-weight: 800; }
+
+    /* Sticky Nav Search Box */
+    .zp-nav-search-wrap { position: relative; display: flex; align-items: center; background: var(--zp-border-subtle); border: 1px solid var(--zp-border); border-radius: var(--zp-radius-pill); padding: 2px 8px 2px 12px; transition: all 0.2s; }
+    .zp-nav-search-wrap:focus-within { border-color: var(--zp-primary); background: var(--zp-bg-card); }
+    .zp-nav-search-input { background: transparent; border: none; outline: none; font-size: 0.8rem; font-weight: 600; color: var(--zp-text); padding: 4px 0; width: 150px; font-family: inherit; }
+    .zp-nav-search-input::placeholder { color: var(--zp-text-muted); }
+
+    /* Post Cards List */
+    .zp-posts-list { display: flex; flex-direction: column; gap: 1rem; }
+    .zp-post-item { background-color: var(--zp-bg-card); border: 1px solid var(--zp-border); border-radius: var(--zp-radius-md); padding: 0.9rem; display: flex; gap: 1.2rem; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; box-shadow: var(--zp-shadow); position: relative; }
+    .zp-post-item:hover { transform: translateY(-2px); border-color: var(--zp-primary); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+    .zp-post-thumb-wrap { width: 170px; height: 105px; border-radius: var(--zp-radius-sm); overflow: hidden; position: relative; flex-shrink: 0; background: #111; }
+    .zp-post-thumb { width: 100%; height: 100%; object-fit: cover; }
+    .zp-post-cat-badge { position: absolute; top: 6px; left: 6px; background-color: var(--zp-primary); color: #ffffff; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; padding: 2px 7px; border-radius: var(--zp-radius-pill); }
+    .zp-post-details { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    .zp-post-meta { font-size: 0.75rem; color: var(--zp-text-muted); display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.35rem; }
+    .zp-post-title { font-size: 1.05rem; font-weight: 800; line-height: 1.35; color: var(--zp-heading); margin-bottom: 0.5rem; }
+    .zp-post-title a:hover { color: var(--zp-primary); }
+    .zp-post-actions { display: flex; align-items: center; gap: 0.8rem; margin-top: auto; }
+    .zp-btn-play-trigger { background-color: var(--zp-primary); color: #ffffff; border: none; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; padding: 0.35rem 0.9rem; border-radius: var(--zp-radius-pill); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+    .zp-btn-play-trigger:hover { background-color: var(--zp-primary-hover); }
+    .zp-btn-dl-direct { background-color: var(--zp-border-subtle); color: var(--zp-text); border: 1px solid var(--zp-border); font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.8rem; border-radius: var(--zp-radius-pill); display: inline-flex; align-items: center; gap: 5px; }
+    .zp-btn-dl-direct:hover { background-color: var(--zp-primary); color: #ffffff; border-color: var(--zp-primary); }
+
+    /* Sidebar Widgets */
+    .zp-widget { background-color: var(--zp-bg-card); border: 1px solid var(--zp-border); border-radius: var(--zp-radius-md); padding: 1.2rem; margin-bottom: 1.5rem; box-shadow: var(--zp-shadow); }
+    .zp-widget-header { border-bottom: 2px solid var(--zp-border); padding-bottom: 0.6rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; }
+    .zp-widget-title { font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--zp-heading); }
+
+    /* WhatsApp Channel Box */
+    .zp-wa-channel-box { background: linear-gradient(135deg, #075e54 0%, #128c7e 100%); color: #ffffff; border-radius: var(--zp-radius-md); padding: 1.2rem; text-align: center; margin-bottom: 1.5rem; box-shadow: var(--zp-shadow); }
+    .zp-wa-btn-full { background-color: #25D366; color: #ffffff; display: block; width: 100%; padding: 0.6rem 1rem; border-radius: var(--zp-radius-pill); font-weight: 800; font-size: 0.85rem; margin-top: 0.8rem; text-decoration: none; }
+    .zp-wa-btn-full:hover { background-color: #20ba5a; color: #fff; }
+
+    /* Trending Ranked List */
+    .zp-trending-list { list-style: none; display: flex; flex-direction: column; gap: 0.8rem; }
+    .zp-trending-item { display: flex; align-items: center; gap: 0.8rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--zp-border-subtle); }
+    .zp-trending-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .zp-trending-rank { width: 24px; height: 24px; border-radius: 50%; background: var(--zp-primary); color: #ffffff; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .zp-trending-thumb { width: 44px; height: 44px; border-radius: var(--zp-radius-sm); object-fit: cover; flex-shrink: 0; }
+    .zp-trending-details { flex: 1; min-width: 0; }
+    .zp-trending-name { font-size: 0.85rem; font-weight: 700; color: var(--zp-heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .zp-trending-date { font-size: 0.7rem; color: var(--zp-text-muted); margin-top: 2px; }
+
+    /* Trending Artists Avatars */
+    .zp-artists-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; text-align: center; }
+    .zp-artist-circle-img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--zp-primary); margin: 0 auto 4px; display: block; }
+    .zp-artist-circle-name { font-size: 0.72rem; font-weight: 700; color: var(--zp-heading); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Single Song Download Page */
+    .zp-single-post { background-color: var(--zp-bg-card); border: 1px solid var(--zp-border); border-radius: var(--zp-radius-lg); padding: 2rem; box-shadow: var(--zp-shadow); }
+    .zp-single-breadcrumbs { font-size: 0.78rem; color: var(--zp-text-muted); margin-bottom: 1rem; }
+    .zp-single-title { font-size: 1.85rem; font-weight: 800; color: var(--zp-heading); line-height: 1.25; margin-bottom: 1rem; }
+    .zp-single-meta { display: flex; align-items: center; gap: 1rem; font-size: 0.8rem; color: var(--zp-text-muted); border-bottom: 1px solid var(--zp-border); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+    .zp-single-featured-art { width: 100%; max-width: 600px; margin: 0 auto 1.5rem; border-radius: var(--zp-radius-md); overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    .zp-single-featured-art img { width: 100%; height: auto; display: block; }
+    .zp-editorial-body { font-size: 0.95rem; line-height: 1.8; color: var(--zp-text); margin-bottom: 2rem; }
+    .zp-editorial-body p { margin-bottom: 1.2rem; }
+    
+    /* Native Audio Streaming Player */
+    .zp-player-box { background: var(--zp-border-subtle); border: 1px solid var(--zp-border); border-radius: var(--zp-radius-md); padding: 1.2rem; margin: 1.5rem 0; }
+    .zp-download-cta-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background-color: var(--zp-primary); color: #ffffff; font-size: 1.15rem; font-weight: 800; text-transform: uppercase; padding: 1rem 2rem; border-radius: var(--zp-radius-pill); text-align: center; margin: 1.5rem auto; max-width: 400px; box-shadow: 0 6px 20px rgba(6, 128, 30, 0.3); transition: transform 0.2s, background-color 0.2s; }
+    .zp-download-cta-btn:hover { transform: scale(1.03); background-color: var(--zp-primary-hover); color: #ffffff; }
+
+    /* Tags & Social Share Bar */
+    .zp-share-bar { display: flex; align-items: center; gap: 0.8rem; margin: 1.5rem 0; flex-wrap: wrap; }
+    .zp-share-btn { padding: 0.4rem 0.9rem; border-radius: var(--zp-radius-pill); font-size: 0.78rem; font-weight: 700; color: #ffffff; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-sh-fb { background-color: #1877F2; }
+    .btn-sh-tw { background-color: #000000; }
+    .btn-sh-wa { background-color: #25D366; }
+
+    /* Persistent Bottom Audio Player */
+    .zp-dock-player { position: fixed; bottom: 0; left: 0; right: 0; background: #0f141f; border-top: 2px solid var(--zp-primary); color: #ffffff; z-index: 1001; padding: 8px 1.5rem; display: none; align-items: center; justify-content: space-between; box-shadow: 0 -4px 20px rgba(0,0,0,0.5); }
+    .zp-dock-info { display: flex; align-items: center; gap: 12px; }
+    .zp-dock-thumb { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; }
+    .zp-dock-title { font-size: 0.88rem; font-weight: 800; }
+    .zp-dock-artist { font-size: 0.75rem; color: #94a3b8; }
+    .zp-dock-controls { display: flex; align-items: center; gap: 1rem; }
+    .zp-dock-btn { background: none; border: none; color: #ffffff; font-size: 1.2rem; cursor: pointer; }
+    .zp-dock-btn.btn-play-circle { width: 38px; height: 38px; border-radius: 50%; background: var(--zp-primary); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+
+    /* Empty State */
+    .zp-empty-state { text-align: center; padding: 4rem 1.5rem; background: var(--zp-bg-card); border-radius: var(--zp-radius-md); border: 1px dashed var(--zp-border); }
+    .zp-empty-state i { font-size: 3rem; color: var(--zp-text-muted); margin-bottom: 1rem; }
+    .zp-empty-state h3 { font-size: 1.2rem; font-weight: 800; color: var(--zp-heading); margin-bottom: 0.5rem; }
+
+    /* Footer */
+    .zp-footer { background-color: #0a0d14; color: #94a3b8; padding: 2.5rem 1.5rem 5rem; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.82rem; }
+    .zp-footer-container { max-width: 1200px; margin: 0 auto; text-align: center; }
+    .zp-footer-social { display: flex; justify-content: center; gap: 1.2rem; margin: 1.2rem 0; font-size: 1.2rem; }
+    .zp-footer-social a:hover { color: var(--zp-primary); }
+    .zp-footer-copy { margin-top: 1rem; font-size: 0.78rem; }
+    </style>
+    
+</head>
+<body>
+    <!-- Top Promo Headspace Bar -->
+    <div class="zp-top-promo">
+        <div>
+            <span>🎵 Are you an Artist or Producer? Get your song uploaded & promoted on ZedHits!</span>
+        </div>
+        <div class="zp-top-promo-actions">
+            <a href="https://wa.me/260970000000?text=Hello%20ZedHits%2C%20I%20want%20to%20submit%20my%20song%20for%20upload%20and%20promotion." target="_blank" class="btn-top-wa"><i class="fab fa-whatsapp"></i> Chat WhatsApp</a>
+            <a href="tel:+260 975524577" class="btn-top-call"><i class="fas fa-phone-alt"></i> Call +260 975524577</a>
+        </div>
+    </div>
+
+    <!-- Header Logo Row -->
+    <header class="zp-header-logo-row">
+        <a href="/" class="zp-logo-link">
+            <img src="/media/covers/logo_1d46cfc41a840cc1.png" alt="ZedHits" class="zp-logo-img">
+        </a>
+    </header>
+
+    <!-- Sticky Main Navigation Bar -->
+    <nav class="zp-sticky-nav">
+        <div class="zp-nav-container">
+            <ul class="zp-menu-links">
+                <li class="zp-menu-item"><a href="/">HOME</a></li>
+                <li class="zp-menu-item"><a href="/music">MUSIC</a></li>
+                <li class="zp-menu-item"><a href="/videos">VIDEOS</a></li>
+                <li class="zp-menu-item"><a href="/albums">ALBUM</a></li>
+                <li class="zp-menu-item active"><a href="/artists">ARTISTS</a></li>
+                <li class="zp-menu-item"><a href="/about">ABOUT US</a></li>
+            </ul>
+
+            <div class="zp-nav-actions">
+                <button class="zp-theme-toggle" onclick="toggleSkin()" title="Toggle Dark/Light Mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Bottom App Navigation Dock -->
+    <nav class="zp-mobile-nav" role="navigation">
+        <ul>
+            <li><a href="/"><i class="fas fa-home"></i><span>HOME</span></a></li>
+            <li><a href="/music"><i class="fas fa-music"></i><span>MUSIC</span></a></li>
+            <li><a href="/videos"><i class="fas fa-video"></i><span>VIDEOS</span></a></li>
+            <li><a href="/albums"><i class="fas fa-compact-disc"></i><span>ALBUM</span></a></li>
+            <li class="active"><a href="/artists"><i class="fas fa-user-friends"></i><span>ARTISTS</span></a></li>
+        </ul>
+    </nav>
+
+    <main class="zp-container" style="max-width: 900px;">
+        <div class="zp-mag-box-header">
+            <h2 class="zp-mag-box-title"><i class="fas fa-users" style="color:var(--zp-primary);"></i> Artists</h2>
+            <span style="font-size:0.85rem; color:var(--zp-text-muted); font-weight:700;">3 Artists</span>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+            
+        <div style="background:var(--zp-bg-card); border:1px solid var(--zp-border); border-radius:var(--zp-radius-md); padding:1.2rem; display:flex; align-items:center; gap:1.2rem; box-shadow:var(--zp-shadow);">
+            <img src="/media/covers/16069eabf90dc2146f94a3f1bb3664a344055564e1a458e9270515a3cf8c256e.jpeg" style="width:70px; height:70px; border-radius:50%; object-fit:cover; border:2px solid var(--zp-primary);" alt="Dre">
+            <div style="flex:1;">
+                <h3 style="font-size:1.15rem; font-weight:800; color:var(--zp-heading);"><a href="/artist/3">Dre</a> <i class="fas fa-check-circle" style="color:var(--zp-primary); font-size:0.9rem;"></i></h3>
+                <div style="font-size:0.8rem; color:var(--zp-text-muted); margin-top:2px;">
+                    <span><i class="fas fa-music"></i> 3 Tracks</span> • 
+                    <span><i class="fas fa-headphones"></i> 0 Streams</span>
+                </div>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <a href="/artist/3" class="zp-btn-play-trigger" style="font-size:0.75rem; padding:0.4rem 0.8rem;">Profile</a>
+                <a href="/api/artists/3/download-zip" class="zp-btn-dl-direct" style="font-size:0.75rem; padding:0.4rem 0.8rem;" title="Download Full Discography ZIP"><i class="fas fa-file-archive"></i> ZIP</a>
+            </div>
+        </div>
+        
+        <div style="background:var(--zp-bg-card); border:1px solid var(--zp-border); border-radius:var(--zp-radius-md); padding:1.2rem; display:flex; align-items:center; gap:1.2rem; box-shadow:var(--zp-shadow);">
+            <img src="/media/covers/41a73249c8b84b2a3e81d591c25e5833a66e359100f71917ddbf46e2d4302ad2.jpeg" style="width:70px; height:70px; border-radius:50%; object-fit:cover; border:2px solid var(--zp-primary);" alt="Dre 24">
+            <div style="flex:1;">
+                <h3 style="font-size:1.15rem; font-weight:800; color:var(--zp-heading);"><a href="/artist/4">Dre 24</a> <i class="fas fa-check-circle" style="color:var(--zp-primary); font-size:0.9rem;"></i></h3>
+                <div style="font-size:0.8rem; color:var(--zp-text-muted); margin-top:2px;">
+                    <span><i class="fas fa-music"></i> 1 Tracks</span> • 
+                    <span><i class="fas fa-headphones"></i> 0 Streams</span>
+                </div>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <a href="/artist/4" class="zp-btn-play-trigger" style="font-size:0.75rem; padding:0.4rem 0.8rem;">Profile</a>
+                <a href="/api/artists/4/download-zip" class="zp-btn-dl-direct" style="font-size:0.75rem; padding:0.4rem 0.8rem;" title="Download Full Discography ZIP"><i class="fas fa-file-archive"></i> ZIP</a>
+            </div>
+        </div>
+        
+        <div style="background:var(--zp-bg-card); border:1px solid var(--zp-border); border-radius:var(--zp-radius-md); padding:1.2rem; display:flex; align-items:center; gap:1.2rem; box-shadow:var(--zp-shadow);">
+            <img src="/media/covers/4cfd773dacf56a0c0b7def4444e6d5b50011b4c61d04df302df98cf035e13380.webp" style="width:70px; height:70px; border-radius:50%; object-fit:cover; border:2px solid var(--zp-primary);" alt="Joe L Barnes">
+            <div style="flex:1;">
+                <h3 style="font-size:1.15rem; font-weight:800; color:var(--zp-heading);"><a href="/artist/23">Joe L Barnes</a> <i class="fas fa-check-circle" style="color:var(--zp-primary); font-size:0.9rem;"></i></h3>
+                <div style="font-size:0.8rem; color:var(--zp-text-muted); margin-top:2px;">
+                    <span><i class="fas fa-music"></i> 1 Tracks</span> • 
+                    <span><i class="fas fa-headphones"></i> 0 Streams</span>
+                </div>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <a href="/artist/23" class="zp-btn-play-trigger" style="font-size:0.75rem; padding:0.4rem 0.8rem;">Profile</a>
+                <a href="/api/artists/23/download-zip" class="zp-btn-dl-direct" style="font-size:0.75rem; padding:0.4rem 0.8rem;" title="Download Full Discography ZIP"><i class="fas fa-file-archive"></i> ZIP</a>
+            </div>
+        </div>
+        
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="zp-footer">
+        <div class="zp-footer-container">
+            <p class="zp-footer-copy">
+                © 2026 ZedHits. All Rights Reserved. Empowering Zambian Music Worldwide.
+            </p>
+        </div>
+    </footer>
+
+    
+<script>
+    // Theme Toggle (Light / Dark Skin)
+    function initSkin() {
+        const savedSkin = localStorage.getItem('tie-skin') || 'light';
+        document.documentElement.setAttribute('data-skin', savedSkin);
+        updateSkinIcon(savedSkin);
+    }
+    function toggleSkin() {
+        const current = document.documentElement.getAttribute('data-skin') || 'light';
+        const next = current === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-skin', next);
+        localStorage.setItem('tie-skin', next);
+        updateSkinIcon(next);
+    }
+    function updateSkinIcon(skin) {
+        document.querySelectorAll('.zp-theme-toggle i').forEach(el => {
+            el.className = skin === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        });
+    }
+    document.addEventListener('DOMContentLoaded', initSkin);
+
+    // Global Dock Audio Player
+    let globalAudio = new Audio();
+    let currentPlayingId = null;
+
+    function playTrack(id, title, artist, coverUrl, streamUrl) {
+        const dock = document.getElementById('zp-dock-player');
+        if (!dock) return;
+
+        if (currentPlayingId === id && !globalAudio.paused) {
+            globalAudio.pause();
+            document.getElementById('zp-dock-play-icon').className = 'fas fa-play';
+            return;
+        }
+
+        currentPlayingId = id;
+        globalAudio.src = streamUrl;
+        globalAudio.play().then(() => {
+            dock.style.display = 'flex';
+            document.getElementById('zp-dock-thumb').src = coverUrl;
+            document.getElementById('zp-dock-title').textContent = title;
+            document.getElementById('zp-dock-artist').textContent = artist;
+            document.getElementById('zp-dock-play-icon').className = 'fas fa-pause';
+            fetch('/api/tracks/' + id + '/play', { method: 'POST' }).catch(() => {});
+        }).catch(err => console.error("Playback error:", err));
+    }
+
+    function toggleDockPlay() {
+        if (!globalAudio.src) return;
+        if (globalAudio.paused) {
+            globalAudio.play();
+            document.getElementById('zp-dock-play-icon').className = 'fas fa-pause';
+        } else {
+            globalAudio.pause();
+            document.getElementById('zp-dock-play-icon').className = 'fas fa-play';
+        }
+    }
+
+    function closeDock() {
+        globalAudio.pause();
+        const dock = document.getElementById('zp-dock-player');
+        if (dock) dock.style.display = 'none';
+        currentPlayingId = null;
+    }
+
+    // Real-Time Debounced Multi-Field Search Engine
+    let searchDebounceTimer = null;
+    let originalPostsHtml = '';
+
+    function initSearchState() {
+        const list = document.querySelector('.zp-posts-list');
+        if (list) {
+            originalPostsHtml = list.innerHTML;
+        }
+    }
+    document.addEventListener('DOMContentLoaded', initSearchState);
+
+    function handleRealtimeSearch(query) {
+        const q = (query || '').trim();
+        const clearBtns = document.querySelectorAll('.zp-search-clear');
+        clearBtns.forEach(btn => btn.style.display = q.length > 0 ? 'inline-flex' : 'none');
+
+        // Synchronize all search inputs on screen
+        document.querySelectorAll('.zp-search-input, .zp-nav-search-input').forEach(inp => {
+            if (inp.value !== query) inp.value = query;
+        });
+
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+            executeSearch(q);
+        }, 300);
+    }
+
+    function clearRealtimeSearch() {
+        document.querySelectorAll('.zp-search-input, .zp-nav-search-input').forEach(inp => inp.value = '');
+        document.querySelectorAll('.zp-search-clear').forEach(btn => btn.style.display = 'none');
+        executeSearch('');
+    }
+
+    async function executeSearch(query) {
+        const list = document.querySelector('.zp-posts-list');
+        if (!list) return;
+
+        const q = (query || '').toLowerCase().trim();
+        if (!q) {
+            if (originalPostsHtml) {
+                list.innerHTML = originalPostsHtml;
+            }
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/tracks?search=' + encodeURIComponent(q));
+            if (res.ok) {
+                const tracks = await res.json();
+                if (tracks && tracks.length > 0) {
+                    let html = '';
+                    const escapedQ = q.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                    const regex = new RegExp('(' + escapedQ + ')', 'gi');
+
+                    tracks.forEach(t => {
+                        const featSuffix = t.featured_artists ? (' ft. ' + t.featured_artists) : '';
+                        const artistFull = t.artist + featSuffix;
+                        const tArt = t.cover_url || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80';
+                        const dateStr = (t.created_at || '2026-09-03').split(' ')[0];
+
+                        const displayTitle = t.title.replace(regex, '<mark class="zp-search-highlight">$1</mark>');
+                        const displayArtist = artistFull.replace(regex, '<mark class="zp-search-highlight">$1</mark>');
+                        const displayGenre = t.genre.replace(regex, '<mark class="zp-search-highlight">$1</mark>');
+
+                        html += `
+                        <article class="zp-post-item" data-title="${t.title}" data-artist="${artistFull}">
+                            <div class="zp-post-thumb-wrap">
+                                <img src="${tArt}" class="zp-post-thumb" alt="${t.title}" loading="lazy">
+                                <span class="zp-post-cat-badge">${displayGenre}</span>
+                            </div>
+                            <div class="zp-post-details">
+                                <div class="zp-post-meta">
+                                    <span><i class="far fa-calendar-alt"></i> ${dateStr}</span>
+                                    <span><i class="fas fa-headphones"></i> ${t.plays_count || 0}</span>
+                                    <span style="background:var(--zp-border-subtle); padding:1px 6px; border-radius:4px; font-weight:700;">${t.bitrate_kbps || 320}k HD</span>
+                                </div>
+                                <h3 class="zp-post-title">
+                                    <a href="/track/${t.id}">${displayArtist} – ${displayTitle}</a>
+                                </h3>
+                                <div class="zp-post-actions">
+                                    <button class="zp-btn-play-trigger" onclick="playTrack(${t.id}, '${t.title.replace(/'/g, "\'")}', '${artistFull.replace(/'/g, "\'")}', '${tArt}', '${t.stream_url}')">
+                                        <i class="fas fa-play"></i> Play
+                                    </button>
+                                    <a href="/api/tracks/${t.id}/download" class="zp-btn-dl-direct" title="Download MP3"><i class="fas fa-arrow-down"></i></a>
+                                    <a href="/track/${t.id}" style="font-size:0.78rem; font-weight:700; color:var(--zp-text-muted); margin-left:auto;">Lyrics & Details →</a>
+                                </div>
+                            </div>
+                        </article>
+                        `;
+                    });
+                    list.innerHTML = html;
+                } else {
+                    list.innerHTML = `
+                    <div class="zp-empty-state" style="text-align:center; padding:3.5rem 1.5rem; background:var(--zp-bg-card); border:1px solid var(--zp-border); border-radius:var(--zp-radius-md);">
+                        <i class="fas fa-search" style="font-size:2.8rem; color:var(--zp-text-muted); margin-bottom:1rem; opacity:0.6;"></i>
+                        <h3 style="font-size:1.15rem; font-weight:800; color:var(--zp-heading); margin-bottom:0.5rem;">No tracks found matching "${query}"</h3>
+                        <p style="font-size:0.85rem; color:var(--zp-text-muted); margin-bottom:1.4rem;">Try searching by artist name, song title, genre, or featured collaborator.</p>
+                        <button type="button" onclick="clearRealtimeSearch()" class="zp-btn-play-trigger" style="margin:0 auto; display:inline-flex; cursor:pointer;">
+                            <i class="fas fa-undo"></i> Reset Search
+                        </button>
+                    </div>
+                    `;
+                }
+            }
+        } catch (e) {
+            console.error("Search error:", e);
+        }
+    }
+</script>
+
+<div id="zp-dock-player" class="zp-dock-player">
+    <div class="zp-dock-info">
+        <img id="zp-dock-thumb" src="" class="zp-dock-thumb" alt="Track Cover">
+        <div>
+            <div id="zp-dock-title" class="zp-dock-title">Song Title</div>
+            <div id="zp-dock-artist" class="zp-dock-artist">Artist Name</div>
+        </div>
+    </div>
+    <div class="zp-dock-controls">
+        <button class="zp-dock-btn btn-play-circle" onclick="toggleDockPlay()">
+            <i id="zp-dock-play-icon" class="fas fa-play"></i>
+        </button>
+        <button class="zp-dock-btn" onclick="closeDock()"><i class="fas fa-times"></i></button>
+    </div>
+</div>
+
+</body>
+</html>

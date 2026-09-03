@@ -1,0 +1,27 @@
+# Database
+*.db
+*.sqlite
+*.sqlite3
+zedhits.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+ENV/
+env/
+
+# Firebase & Logs
+.firebase/
+firebase-debug.log
+*.log
+
+# Temp files
+media/temp/
+
+# OS generated files
+.DS_Store
+Thumbs.db

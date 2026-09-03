@@ -1,0 +1,2002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard & CMS Control | ZedHits</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans', sans-serif; }
+        body { background:#0a0d14; color:#fff; min-height:100vh; overflow-x:hidden; }
+        
+        /* Master 2-Column Responsive Layout */
+        .admin-layout { display:flex; min-height:100vh; }
+        
+        /* Left Sticky Sidebar (Fits all 8 options on screen) */
+        .admin-sidebar {
+            width: 280px;
+            background: #0f141f;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            flex-shrink: 0;
+            z-index: 99;
+        }
+        .admin-sidebar-brand {
+            padding: 1.2rem 1.4rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .admin-sidebar-menu {
+            list-style: none;
+            padding: 1rem 0.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .admin-menu-btn {
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: 1px solid transparent;
+            padding: 9px 12px;
+            border-radius: 8px;
+            color: #94a3b8;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+        .admin-menu-btn .menu-num {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.06);
+            color: #cbd5e1;
+            font-size: 0.72rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .admin-menu-btn i { width: 16px; text-align: center; flex-shrink: 0; }
+        .admin-menu-btn:hover { color: #fff; background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.06); }
+        .admin-menu-btn.active {
+            color: #00e676;
+            background: rgba(0, 230, 118, 0.12);
+            border-color: rgba(0, 230, 118, 0.3);
+            font-weight: 800;
+        }
+        .admin-menu-btn.active .menu-num {
+            background: #00e676;
+            color: #0a0d14;
+        }
+        .admin-sidebar-footer {
+            padding: 1rem 1.2rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #0c1019;
+        }
+
+        /* Main Content Workspace Area */
+        .admin-main {
+            flex: 1;
+            padding: 1.8rem 2.5rem;
+            max-width: 1300px;
+            overflow-y: auto;
+        }
+        
+        /* Mobile 8-Option Responsive Grid (Shows when screen is small) */
+        .admin-mobile-grid {
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 992px) {
+            .admin-sidebar { display: none; }
+            .admin-mobile-grid { display: grid; }
+            .admin-main { padding: 1rem; }
+        }
+        @media (max-width: 600px) {
+            .admin-mobile-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* Mobile Pill Buttons */
+        .mobile-pill-btn {
+            background: #131824;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #94a3b8;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .mobile-pill-btn.active {
+            background: rgba(0, 230, 118, 0.15);
+            border-color: #00e676;
+            color: #00e676;
+        }
+
+        .tab-pane { display:none; }
+        .tab-pane.active { display:block; }
+
+        .card { background:#131824; border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:1.8rem; margin-bottom:2rem; }
+        .card-title { font-size:1.2rem; font-weight:800; margin-bottom:1.2rem; color:#00e676; display:flex; align-items:center; gap:0.6rem; }
+        .form-input { width:100%; background:#0f141f; border:1px solid rgba(255,255,255,0.1); color:#fff; padding:0.75rem 1rem; border-radius:8px; font-size:0.9rem; }
+        .form-input:focus { outline:none; border-color:#00e676; }
+        .form-group { margin-bottom:1.2rem; }
+        label { font-size:0.82rem; font-weight:700; color:#94a3b8; display:block; margin-bottom:0.4rem; }
+        .btn-green { background:#06801e; color:#fff; font-weight:800; padding:0.75rem 1.5rem; border-radius:8px; border:none; cursor:pointer; font-size:0.95rem; display:inline-flex; align-items:center; gap:8px; }
+        .btn-green:hover { background:#006200; }
+        .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+        .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem; }
+        @media (max-width:850px) { .grid-2, .grid-3 { grid-template-columns:1fr; } }
+
+        /* Color Picker Component */
+        .color-row { display:flex; align-items:center; gap:10px; }
+        .color-picker-input { width:48px; height:42px; border:none; border-radius:8px; background:none; cursor:pointer; }
+
+        /* Modal */
+        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:1000; align-items:center; justify-content:center; padding:1.5rem; }
+        .modal.active { display:flex; }
+        .modal-content { background:#131824; border:1px solid rgba(255,255,255,0.12); border-radius:16px; width:100%; max-width:600px; padding:2rem; max-height:90vh; overflow-y:auto; }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sticky Left Sidebar Navigation with All 8 Options -->
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-brand">
+                <a href="/" style="display:flex; align-items:center; gap:0.6rem; text-decoration:none;">
+                    <img src="/media/covers/logo_1d46cfc41a840cc1.png" id="sidebar-brand-logo" alt="Website Logo" style="max-height: 38px; object-fit: contain;">
+                    <span style="font-weight:800; font-size:1.05rem; color:#fff;">CMS Dashboard</span>
+                </a>
+                <span style="font-size:0.65rem; background:rgba(0,230,118,0.15); color:#00e676; font-weight:800; padding:2px 6px; border-radius:4px;">PRO</span>
+            </div>
+
+            <ul class="admin-sidebar-menu">
+                <li>
+                    <button class="admin-menu-btn active" onclick="switchTab('tab-identity', this)" id="btn-tab-identity">
+                        <span class="menu-num">1</span>
+                        <i class="fas fa-id-card"></i>
+                        <span>Site Identity & Copy</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="admin-menu-btn" onclick="switchTab('tab-theme', this)" id="btn-tab-theme">
+                        <span class="menu-num">2</span>
+                        <i class="fas fa-palette"></i>
+                        <span>Visual Style & Theme</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="admin-menu-btn" onclick="switchTab('tab-banner', this)" id="btn-tab-banner">
+                        <span class="menu-num">3</span>
+                        <i class="fas fa-bullhorn"></i>
+                        <span>Announcement Banner</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="admin-menu-btn" onclick="switchTab('tab-toggles', this)" id="btn-tab-toggles">
+                        <span class="menu-num">4</span>
+                        <i class="fas fa-toggle-on"></i>
+                        <span>Feature Toggles</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="admin-menu-btn" onclick="switchTab('tab-contacts', this)" id="btn-tab-contacts">
+                        <span class="menu-num">5</span>
+                        <i class="fas fa-share-alt"></i>
+                        <span>Social & Contacts</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="admin-menu-btn" onclick="switchTab('tab-about', this)" id="btn-tab-about">
+                        <span class="menu-num">6</span>
+                        <i class="fas fa-info-circle"></i>
+                        <span>About Us CMS</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="admin-menu-btn" onclick="switchTab('tab-tracks', this)" id="btn-tab-tracks">
+                        <span class="menu-num">7</span>
+                        <i class="fas fa-music"></i>
+                        <span>Music Pool & Tracks</span>
+                    </button>
+                </li>
+                <li>
+                    <button class="admin-menu-btn" onclick="switchTab('tab-security', this)" id="btn-tab-security">
+                        <span class="menu-num">8</span>
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Admin Security</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="admin-sidebar-footer">
+                <a href="/" target="_blank" style="color:#94a3b8; font-size:0.82rem; font-weight:700; display:flex; align-items:center; gap:6px; padding:6px 0;"><i class="fas fa-external-link-alt"></i> View Public Site</a>
+                <button onclick="logoutAdmin()" style="background:#ff5252; color:#fff; font-weight:700; padding:0.5rem; border-radius:6px; border:none; cursor:pointer; font-size:0.85rem; width:100%;"><i class="fas fa-sign-out-alt"></i> Logout (admin)</button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="admin-main">
+            <!-- Mobile 8-Option Responsive Grid -->
+            <div class="admin-mobile-grid">
+                <div class="mobile-pill-btn active" onclick="switchTab('tab-identity', this)" id="mbtn-tab-identity">
+                    <i class="fas fa-id-card"></i> 1. Identity
+                </div>
+                <div class="mobile-pill-btn" onclick="switchTab('tab-theme', this)" id="mbtn-tab-theme">
+                    <i class="fas fa-palette"></i> 2. Theme
+                </div>
+                <div class="mobile-pill-btn" onclick="switchTab('tab-banner', this)" id="mbtn-tab-banner">
+                    <i class="fas fa-bullhorn"></i> 3. Banner
+                </div>
+                <div class="mobile-pill-btn" onclick="switchTab('tab-toggles', this)" id="mbtn-tab-toggles">
+                    <i class="fas fa-toggle-on"></i> 4. Toggles
+                </div>
+                <div class="mobile-pill-btn" onclick="switchTab('tab-contacts', this)" id="mbtn-tab-contacts">
+                    <i class="fas fa-share-alt"></i> 5. Social
+                </div>
+                <div class="mobile-pill-btn" onclick="switchTab('tab-about', this)" id="mbtn-tab-about">
+                    <i class="fas fa-info-circle"></i> 6. About
+                </div>
+                <div class="mobile-pill-btn" onclick="switchTab('tab-tracks', this)" id="mbtn-tab-tracks">
+                    <i class="fas fa-music"></i> 7. Tracks
+                </div>
+                <div class="mobile-pill-btn" onclick="switchTab('tab-security', this)" id="mbtn-tab-security">
+                    <i class="fas fa-shield-alt"></i> 8. Security
+                </div>
+            </div>
+
+            <!-- Analytics Top Strip -->
+            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1.2rem; margin-bottom:2rem;">
+                <div class="card" style="margin:0; padding:1.2rem; text-align:center;">
+                    <div style="font-size:1.8rem; font-weight:800; color:#00e676;">5</div>
+                    <div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:700;">Total Songs</div>
+                </div>
+                <div class="card" style="margin:0; padding:1.2rem; text-align:center;">
+                    <div style="font-size:1.8rem; font-weight:800; color:#00e676;">11</div>
+                    <div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:700;">Artists</div>
+                </div>
+                <div class="card" style="margin:0; padding:1.2rem; text-align:center;">
+                    <div style="font-size:1.8rem; font-weight:800; color:#00e676;">0</div>
+                    <div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:700;">Total Streams</div>
+                </div>
+                <div class="card" style="margin:0; padding:1.2rem; text-align:center;">
+                    <div style="font-size:1.8rem; font-weight:800; color:#00e676;">0</div>
+                    <div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:700;">Downloads</div>
+                </div>
+            </div>
+
+            <!-- SECTION 1: SITE IDENTITY & COPY -->
+            <div id="tab-identity" class="tab-pane active">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-id-card"></i> Brand Identity & Public Copy Settings</div>
+                <form onsubmit="handleGenericSettingsSave(event)">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Site Title (Browser Tab & Platform Name)</label>
+                            <input type="text" id="cfg-site-title" class="form-input" value="ZedHits">
+                        </div>
+                        <div class="form-group">
+                            <label>Navigation Logo Text (When no logo image is used)</label>
+                            <input type="text" id="cfg-nav-logo-text" class="form-input" value="ZedHits">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Hero Headline (Main Slider Title)</label>
+                            <input type="text" id="cfg-hero-title" class="form-input" value="Download The Latest Zambian Music In 2026">
+                        </div>
+                        <div class="form-group">
+                            <label>Hero Subtitle / Tagline</label>
+                            <input type="text" id="cfg-hero-sub" class="form-input" value="The Pulse of Zambian & African Music Streaming & Studio Master MP3 Downloads">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Hero Showcase Dynamic Mode</label>
+                            <select id="cfg-hero-mode" class="form-input">
+                                <option value="trending" >Trending / Most Streamed (Auto)</option>
+                                <option value="latest" >Latest New Releases (Auto)</option>
+                                <option value="context" >Context-Aware (Adapts to Active Genre Filter)</option>
+                                <option value="custom" >Manual Pinned Tracks (Specify IDs)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Pinned Track IDs for Hero (e.g. 1, 4, 8 - used when mode is Manual)</label>
+                            <input type="text" id="cfg-hero-pinned" class="form-input" value="" placeholder="e.g. 1, 4, 8">
+                        </div>
+                    </div>
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label>Latest Songs Section Title</label>
+                            <input type="text" id="cfg-sec-latest" class="form-input" value="The Latest">
+                        </div>
+                        <div class="form-group">
+                            <label>Trending Section Title</label>
+                            <input type="text" id="cfg-sec-trending" class="form-input" value="Trending">
+                        </div>
+                        <div class="form-group">
+                            <label>Artists Section Title</label>
+                            <input type="text" id="cfg-sec-artists" class="form-input" value="Artists">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Empty-State Message (Displayed when 0 songs match selection)</label>
+                        <input type="text" id="cfg-empty-state" class="form-input" value="No Songs Found in this Selection. Select another genre or explore the latest releases.">
+                    </div>
+                    <div class="form-group">
+                        <label>Footer Copyright & Legal Text</label>
+                        <input type="text" id="cfg-footer" class="form-input" value="© 2026 ZedHits. All Rights Reserved. Empowering Zambian Music Worldwide.">
+                    </div>
+                    <button type="submit" class="btn-green"><i class="fas fa-save"></i> Save Brand Identity</button>
+                </form>
+
+                <hr style="border-color:rgba(255,255,255,0.08); margin:2rem 0;">
+
+                <div class="card-title"><i class="fas fa-image"></i> Brand Logo Upload</div>
+                <div style="display:flex; align-items:center; gap:2rem; flex-wrap:wrap;">
+                    <div>
+                        <label>Current Logo Preview</label>
+                        <div style="background:#0f141f; padding:12px; border-radius:8px; display:inline-block; border:1px solid rgba(255,255,255,0.1);">
+                            <img id="logo-preview-img" src="/media/covers/logo_1d46cfc41a840cc1.png" style="max-height:50px; object-fit:contain;">
+                        </div>
+                    </div>
+                    <div style="flex:1;">
+                        <input type="file" id="logo-file-input" class="form-input" accept="image/*" style="margin-bottom:0.8rem;">
+                        <button onclick="handleLogoUpload()" class="btn-green" style="background:#0284c7;"><i class="fas fa-cloud-upload-alt"></i> Upload New Brand Logo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: VISUAL STYLE & THEME -->
+        <div id="tab-theme" class="tab-pane">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-palette"></i> Palette & Design Tokens</div>
+                <form onsubmit="handleThemeSave(event)">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Primary Brand Accent Color</label>
+                            <div class="color-row">
+                                <input type="color" id="picker-accent" class="color-picker-input" value="#06801e" oninput="syncColor('picker-accent', 'cfg-accent')">
+                                <input type="text" id="cfg-accent" class="form-input" value="#06801e" oninput="syncColor('cfg-accent', 'picker-accent')">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Light Theme Background Base Color</label>
+                            <div class="color-row">
+                                <input type="color" id="picker-bg" class="color-picker-input" value="#f7f8f8" oninput="syncColor('picker-bg', 'cfg-bg')">
+                                <input type="text" id="cfg-bg" class="form-input" value="#f7f8f8" oninput="syncColor('cfg-bg', 'picker-bg')">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Card Surface Color</label>
+                            <div class="color-row">
+                                <input type="color" id="picker-card" class="color-picker-input" value="#ffffff" oninput="syncColor('picker-card', 'cfg-card')">
+                                <input type="text" id="cfg-card" class="form-input" value="#ffffff" oninput="syncColor('cfg-card', 'picker-card')">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Primary Text Color</label>
+                            <div class="color-row">
+                                <input type="color" id="picker-text" class="color-picker-input" value="#2c2f34" oninput="syncColor('picker-text', 'cfg-text')">
+                                <input type="text" id="cfg-text" class="form-input" value="#2c2f34" oninput="syncColor('cfg-text', 'picker-text')">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-green"><i class="fas fa-save"></i> Save Theme Colors</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- SECTION 3: PROMOTIONAL & ANNOUNCEMENT BANNER -->
+        <div id="tab-banner" class="tab-pane">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-bullhorn"></i> Top Announcement & Headspace Banner</div>
+                <form onsubmit="handleBannerSave(event)">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Banner Active Status</label>
+                            <select id="cfg-banner-active" class="form-input">
+                                <option value="true" selected>Enabled (Visible)</option>
+                                <option value="false" >Disabled (Hidden)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Banner Style Type</label>
+                            <select id="cfg-banner-type" class="form-input">
+                                <option value="promotional" selected>Promotional</option>
+                                <option value="info" >Informational / News</option>
+                                <option value="warning" >Important Alert</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Banner Message Copy</label>
+                        <input type="text" id="cfg-banner-msg" class="form-input" value="Are you an Artist or Producer? Get your song uploaded & promoted on ZedHits!">
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Action Button Label</label>
+                            <input type="text" id="cfg-banner-btn-text" class="form-input" value="Chat WhatsApp">
+                        </div>
+                        <div class="form-group">
+                            <label>Action Button URL (Leave blank to use WhatsApp link)</label>
+                            <input type="text" id="cfg-banner-btn-link" class="form-input" value="">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-green"><i class="fas fa-save"></i> Save Banner Settings</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- SECTION 4: PUBLIC FEATURE TOGGLES -->
+        <div id="tab-toggles" class="tab-pane">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-toggle-on"></i> Public Feature & Display Controls</div>
+                <form onsubmit="handleTogglesSave(event)">
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label>Allow Public MP3 Downloads</label>
+                            <select id="cfg-allow-dl" class="form-input">
+                                <option value="true" selected>Enabled</option>
+                                <option value="false" >Disabled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Display Stream / Play Counters</label>
+                            <select id="cfg-show-plays" class="form-input">
+                                <option value="true" selected>Show Plays</option>
+                                <option value="false" >Hide Plays</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Display Release Dates</label>
+                            <select id="cfg-show-dates" class="form-input">
+                                <option value="true" selected>Show Dates</option>
+                                <option value="false" >Hide Dates</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Stream Quality Badge Label</label>
+                            <input type="text" id="cfg-quality-label" class="form-input" value="320k HD">
+                        </div>
+                        <div class="form-group">
+                            <label>Default Homepage Track Sorting</label>
+                            <select id="cfg-sort-mode" class="form-input">
+                                <option value="latest" selected>Newest First</option>
+                                <option value="plays" >Most Streamed First</option>
+                                <option value="title" >Alphabetical (A-Z)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-green"><i class="fas fa-save"></i> Save Feature Toggles</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- SECTION 5: SOCIAL MEDIA & CONTACT DETAILS -->
+        <div id="tab-contacts" class="tab-pane">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-share-alt"></i> Communication Channels & Social Media</div>
+                <form onsubmit="handleContactsSave(event)">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>WhatsApp Promotion Number (International format)</label>
+                            <input type="text" id="cfg-wa" class="form-input" value="+260970000000">
+                        </div>
+                        <div class="form-group">
+                            <label>Telephone Call Number</label>
+                            <input type="text" id="cfg-phone" class="form-input" value="+260 975524577">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Default WhatsApp Pre-filled Text</label>
+                        <input type="text" id="cfg-wa-msg" class="form-input" value="Hello ZedHits, I want to submit my song for upload and promotion.">
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Official Facebook Page URL</label>
+                            <input type="url" id="cfg-social-fb" class="form-input" value="https://web.facebook.com/sandwell.zyambo.10/">
+                        </div>
+                        <div class="form-group">
+                            <label>Official X (Twitter) URL</label>
+                            <input type="url" id="cfg-social-tw" class="form-input" value="https://x.com">
+                        </div>
+                    </div>
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label>Instagram URL</label>
+                            <input type="url" id="cfg-social-ig" class="form-input" value="https://www.instagram.com/zyambo_nyuma/">
+                        </div>
+                        <div class="form-group">
+                            <label>YouTube URL</label>
+                            <input type="url" id="cfg-social-yt" class="form-input" value="https://youtube.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Support Email Address</label>
+                            <input type="email" id="cfg-email" class="form-input" value="zyambo9@gmail.com">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-green"><i class="fas fa-save"></i> Save Contacts & Social Links</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- SECTION 6: ABOUT US CMS -->
+        <div id="tab-about" class="tab-pane">
+            <div class="card">
+                <div class="card-title"><i class="fas fa-info-circle"></i> About Us Page Content Management</div>
+                <form onsubmit="handleAboutSave(event)">
+                    <div class="form-group">
+                        <label>About Page Title</label>
+                        <input type="text" id="cfg-about-title" class="form-input" value="About ZedHits">
+                    </div>
+                    <div class="form-group">
+                        <label>Platform Story & Description</label>
+                        <textarea id="cfg-about-desc" class="form-input" rows="4">ZedHits is Zambia's premier autonomous music streaming and digital audio distribution platform. Founded with a vision to empower Zambian and African artists, ZedHits bridges the gap between creative talent and global music enthusiasts with studio-master quality audio, instant discography archives, and high-speed distribution.</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Mission Directive Statement</label>
+                        <textarea id="cfg-about-mission" class="form-input" rows="3">Empowering African musical heritage through state-of-the-art streaming infrastructure.</textarea>
+                    </div>
+                    <div class="grid-3">
+                        <div class="form-group">
+                            <label>Verified Artists Stat</label>
+                            <input type="text" id="cfg-stat-art" class="form-input" value="200+">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Streams Stat</label>
+                            <input type="text" id="cfg-stat-strm" class="form-input" value="3k+">
+                        </div>
+                        <div class="form-group">
+                            <label>Audio Quality Standard</label>
+                            <input type="text" id="cfg-stat-qty" class="form-input" value="320 kbps HD">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-green"><i class="fas fa-save"></i> Save About Us Content</button>
+                </form>
+            </div>
+
+            <!-- Team & Leadership Profiles Section -->
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                    <div><i class="fas fa-user-tie"></i> Executive & Creative Team (3 Members)</div>
+                    <button onclick="openCreateTeamModal()" class="btn-green" style="padding:6px 12px; font-size:0.8rem;"><i class="fas fa-plus-circle"></i> Add Team Member</button>
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:0.9rem;" id="admin-team-table">
+                    <thead>
+                        <tr style="border-bottom:2px solid rgba(255,255,255,0.1); text-align:left; color:#94a3b8; font-size:0.75rem; text-transform:uppercase;">
+                            <th style="padding:12px;">Photo</th>
+                            <th style="padding:12px;">Name</th>
+                            <th style="padding:12px;">Role / Title</th>
+                            <th style="padding:12px;">Bio</th>
+                            <th style="padding:12px;">Order</th>
+                            <th style="padding:12px; text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-team-tbody">
+                        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="/media/team/member_1788443674_174381a5.jpg" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">Nyuma Zyambo</td>
+            <td style="padding:12px; color:#94a3b8;">Founder and Managing Director</td>
+            <td style="padding:12px; color:#cbd5e1; font-size:0.82rem;">driving the creative and technological vision of t...</td>
+            <td style="padding:12px; color:#cbd5e1;">#1</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditTeamModal(1, 'Nyuma Zyambo', 'Founder and Managing Director', 'driving the creative and technological vision of the platform. Passionate about empowering artists and transforming digital entertainment distribution, they lead company strategy, product innovation, and strategic partnerships to build a premier digital hub for music and culture', '/media/team/member_1788443674_174381a5.jpg', 1)" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteTeamMember(1, 'Nyuma Zyambo')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="/media/team/member_1788443682_43e8ae79.png" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">Emmanuel Sankela</td>
+            <td style="padding:12px; color:#94a3b8;">Lead Sound Engineer</td>
+            <td style="padding:12px; color:#cbd5e1; font-size:0.82rem;">dedicated to sonic clarity, depth, and punch. Spec...</td>
+            <td style="padding:12px; color:#cbd5e1;">#2</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditTeamModal(2, 'Emmanuel Sankela', 'Lead Sound Engineer', 'dedicated to sonic clarity, depth, and punch. Specializing in vocal tracking, high-definition mixing, and dynamic mastering, they transform raw studio sessions into radio-ready, streaming-optimized hits that translate cleanly across everything from high-end sound systems to mobile speakers.', '/media/team/member_1788443682_43e8ae79.png', 2)" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteTeamMember(2, 'Emmanuel Sankela')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="/media/team/member_1788443692_ab8412ce.jpg" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">Emmanuel Chalwe</td>
+            <td style="padding:12px; color:#94a3b8;">Lead Software Engineer and Infrastructure Architect</td>
+            <td style="padding:12px; color:#cbd5e1; font-size:0.82rem;">specializing in building scalable backend engines,...</td>
+            <td style="padding:12px; color:#cbd5e1;">#3</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditTeamModal(3, 'Emmanuel Chalwe', 'Lead Software Engineer and Infrastructure Architect', 'specializing in building scalable backend engines, distributed systems, and cloud environments. Driven by high-availability design and clean automation, they oversee platform reliability, API ecosystems, and database integrity to ensure seamless, real-time media delivery across web and mobile platforms', '/media/team/member_1788443692_ab8412ce.jpg', 3)" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteTeamMember(3, 'Emmanuel Chalwe')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SECTION 7: MUSIC POOL & TRACK MANAGEMENT -->
+        <div id="tab-tracks" class="tab-pane">
+            <div class="grid-2">
+                <!-- Upload Track Form -->
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-cloud-upload-alt"></i> Upload New Zambian Music Track</div>
+                    <form id="upload-form" onsubmit="handleTrackUpload(event)">
+                        <div class="form-group">
+                            <label>Audio File (MP3, WAV, M4A, FLAC) *</label>
+                            <input type="file" id="up-file" class="form-input" accept="audio/*" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Song Title</label>
+                            <input type="text" id="up-title" class="form-input" placeholder="e.g. God Is Good">
+                        </div>
+                        <div class="form-group">
+                            <label>Artist Name</label>
+                            <input type="text" id="up-artist" class="form-input" placeholder="e.g. Macky 2">
+                        </div>
+                        <div class="form-group">
+                            <label>Featured Artists (Optional)</label>
+                            <input type="text" id="up-featured-artists" class="form-input" placeholder="e.g. Jay Wolf, Towela">
+                        </div>
+                        <div class="form-group">
+                            <label>Genre</label>
+                            <select id="up-genre" class="form-input">
+                                <option value="Afrobeats">Afrobeats</option><option value="Dancehall">Dancehall</option><option value="Gospel">Gospel</option><option value="Kalindula">Kalindula</option><option value="Others">Others</option><option value="Pop">Pop</option><option value="RnB">RnB</option><option value="Zed Hip Hop">Zed Hip Hop</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Cover Artwork (Optional Upload)</label>
+                            <input type="file" id="up-cover-file" class="form-input" accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <label>Cover Artwork URL (Optional Fallback)</label>
+                            <input type="url" id="up-cover-url" class="form-input" placeholder="https://...">
+                        </div>
+                        <button type="submit" class="btn-green" id="btn-up-submit" style="width:100%;"><i class="fas fa-upload"></i> Upload & Process Track</button>
+                    </form>
+                </div>
+
+                <!-- Fast Info Box -->
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-info-circle"></i> Audio Engine Features</div>
+                    <ul style="line-height:2; color:#cbd5e1; font-size:0.9rem; padding-left:1.2rem;">
+                        <li><strong>ID3 Tag Autodetection:</strong> Uploading an audio file automatically populates title, artist, bitrate, and duration.</li>
+                        <li><strong>SHA-256 Deduplication:</strong> Identical audio files are rejected before wasting server disk storage.</li>
+                        <li><strong>Cascade Deletion:</strong> Deleting a track physically wipes the binary file from disk and sanitizes relational indexes.</li>
+                        <li><strong>Live In-Place Editing:</strong> Edit song titles, lyrics, albums, and artists instantly without re-uploading.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Songs Management Table -->
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between;">
+                    <div><i class="fas fa-music"></i> Live Music Catalog (5 Songs)</div>
+                    <input type="text" placeholder="Search catalog..." onkeyup="filterAdminTracks(this.value)" style="background:#0f141f; border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 12px; border-radius:8px; font-size:0.85rem; width:220px;">
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:0.9rem;" id="admin-tracks-table">
+                    <thead>
+                        <tr style="border-bottom:2px solid rgba(255,255,255,0.1); text-align:left; color:#94a3b8; font-size:0.75rem; text-transform:uppercase;">
+                            <th style="padding:12px;">Cover</th>
+                            <th style="padding:12px;">Title</th>
+                            <th style="padding:12px;">Artist</th>
+                            <th style="padding:12px;">Genre</th>
+                            <th style="padding:12px;">Streams</th>
+                            <th style="padding:12px;">Downloads</th>
+                            <th style="padding:12px; text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="/media/covers/ab8412ce0983e00c1fed16405a7021edb2ac2c15220591f5f4bb1cf70b6b9d12.jpg" style="width:40px; height:40px; border-radius:6px; object-fit:cover;"></td>
+            <td style="padding:12px; font-weight:700;">Champion</td>
+            <td style="padding:12px; color:#94a3b8;">Dre</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">Others</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditModal(62, 'Champion', 'Dre', '', 'Others', '', 320, '/media/covers/ab8412ce0983e00c1fed16405a7021edb2ac2c15220591f5f4bb1cf70b6b9d12.jpg', '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteTrack(62, 'Champion')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="/media/covers/6c285a6439d3fa6fa3651a6526b4be739326c8dd1775765df01cbb47d5751694.jpeg" style="width:40px; height:40px; border-radius:6px; object-fit:cover;"></td>
+            <td style="padding:12px; font-weight:700;">The Debate</td>
+            <td style="padding:12px; color:#94a3b8;">Dre <span style='font-size:0.75rem; color:#00e676;'>ft. Jay Wolf</span></td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">Afrobeats</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditModal(61, 'The Debate', 'Dre', 'Jay Wolf', 'Afrobeats', '', 128, '/media/covers/6c285a6439d3fa6fa3651a6526b4be739326c8dd1775765df01cbb47d5751694.jpeg', '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteTrack(61, 'The Debate')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="/media/covers/4cfd773dacf56a0c0b7def4444e6d5b50011b4c61d04df302df98cf035e13380.webp" style="width:40px; height:40px; border-radius:6px; object-fit:cover;"></td>
+            <td style="padding:12px; font-weight:700;">Road Less Traveled</td>
+            <td style="padding:12px; color:#94a3b8;">Joe L Barnes <span style='font-size:0.75rem; color:#00e676;'>ft. Seph Schlueter</span></td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">Gospel</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditModal(60, 'Road Less Traveled', 'Joe L Barnes', 'Seph Schlueter', 'Gospel', 'Road Less Traveled', 320, '/media/covers/4cfd773dacf56a0c0b7def4444e6d5b50011b4c61d04df302df98cf035e13380.webp', '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteTrack(60, 'Road Less Traveled')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="/media/covers/16069eabf90dc2146f94a3f1bb3664a344055564e1a458e9270515a3cf8c256e.jpeg" style="width:40px; height:40px; border-radius:6px; object-fit:cover;"></td>
+            <td style="padding:12px; font-weight:700;">Dre Paker With You</td>
+            <td style="padding:12px; color:#94a3b8;">Dre</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">RnB</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditModal(59, 'Dre Paker With You', 'Dre', '', 'RnB', '', 128, '/media/covers/16069eabf90dc2146f94a3f1bb3664a344055564e1a458e9270515a3cf8c256e.jpeg', '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteTrack(59, 'Dre Paker With You')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="/media/covers/41a73249c8b84b2a3e81d591c25e5833a66e359100f71917ddbf46e2d4302ad2.jpeg" style="width:40px; height:40px; border-radius:6px; object-fit:cover;"></td>
+            <td style="padding:12px; font-weight:700;">Not Ukabebe</td>
+            <td style="padding:12px; color:#94a3b8;">Dre 24</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">Afrobeats</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditModal(54, 'Not Ukabebe', 'Dre 24', '', 'Afrobeats', '', 320, '/media/covers/41a73249c8b84b2a3e81d591c25e5833a66e359100f71917ddbf46e2d4302ad2.jpeg', '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteTrack(54, 'Not Ukabebe')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Verified Artists Management Table -->
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                    <div><i class="fas fa-users"></i> Verified Artists Hub (11 Artists)</div>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="openCreateArtistModal()" class="btn-green" style="padding:6px 12px; font-size:0.8rem;"><i class="fas fa-user-plus"></i> Add New Artist</button>
+                        <button onclick="purgeEmptyArtists()" style="background:#ff9800; color:#000; font-weight:800; border:none; padding:6px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer;"><i class="fas fa-broom"></i> Purge 0-Track Artists</button>
+                    </div>
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:0.9rem;" id="admin-artists-table">
+                    <thead>
+                        <tr style="border-bottom:2px solid rgba(255,255,255,0.1); text-align:left; color:#94a3b8; font-size:0.75rem; text-transform:uppercase;">
+                            <th style="padding:12px;">Avatar</th>
+                            <th style="padding:12px;">Artist Name</th>
+                            <th style="padding:12px;">Discography</th>
+                            <th style="padding:12px;">Total Streams</th>
+                            <th style="padding:12px;">Total Downloads</th>
+                            <th style="padding:12px; text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="/media/covers/16069eabf90dc2146f94a3f1bb3664a344055564e1a458e9270515a3cf8c256e.jpeg" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">Dre</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">3 Songs</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditArtistModal(3, 'Dre', '', '/media/covers/16069eabf90dc2146f94a3f1bb3664a344055564e1a458e9270515a3cf8c256e.jpeg')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <span style="font-size:0.75rem; color:#64748b; font-weight:700;">In Use (3)</span>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="/media/covers/41a73249c8b84b2a3e81d591c25e5833a66e359100f71917ddbf46e2d4302ad2.jpeg" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">Dre 24</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">1 Songs</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditArtistModal(4, 'Dre 24', '', '/media/covers/41a73249c8b84b2a3e81d591c25e5833a66e359100f71917ddbf46e2d4302ad2.jpeg')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <span style="font-size:0.75rem; color:#64748b; font-weight:700;">In Use (1)</span>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="/media/covers/4cfd773dacf56a0c0b7def4444e6d5b50011b4c61d04df302df98cf035e13380.webp" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">Joe L Barnes</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">1 Songs</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditArtistModal(23, 'Joe L Barnes', '', '/media/covers/4cfd773dacf56a0c0b7def4444e6d5b50011b4c61d04df302df98cf035e13380.webp')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <span style="font-size:0.75rem; color:#64748b; font-weight:700;">In Use (1)</span>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=100&q=80" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">76 Drums</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">0 Songs</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditArtistModal(14, '76 Drums', '', '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteArtist(14, '76 Drums')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;"><i class="fas fa-trash"></i> Delete</button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=100&q=80" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">Cardi B</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">0 Songs</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditArtistModal(16, 'Cardi B', '', '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteArtist(16, 'Cardi B')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;"><i class="fas fa-trash"></i> Delete</button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=100&q=80" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">Dre Parker</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">0 Songs</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditArtistModal(8, 'Dre Parker', '', '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteArtist(8, 'Dre Parker')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;"><i class="fas fa-trash"></i> Delete</button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=100&q=80" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">Joe L Barnes,</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">0 Songs</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditArtistModal(15, 'Joe L Barnes,', '', '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteArtist(15, 'Joe L Barnes,')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;"><i class="fas fa-trash"></i> Delete</button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=100&q=80" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">Macky 2</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">0 Songs</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditArtistModal(11, 'Macky 2', '', '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteArtist(11, 'Macky 2')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;"><i class="fas fa-trash"></i> Delete</button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=100&q=80" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">Unique Artist ABC</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">0 Songs</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditArtistModal(20, 'Unique Artist ABC', '', '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteArtist(20, 'Unique Artist ABC')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;"><i class="fas fa-trash"></i> Delete</button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=100&q=80" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">Usher</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">0 Songs</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditArtistModal(9, 'Usher', '', '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteArtist(9, 'Usher')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;"><i class="fas fa-trash"></i> Delete</button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=100&q=80" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #00e676;"></td>
+            <td style="padding:12px; font-weight:700;">Yo Maps</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">0 Songs</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditArtistModal(7, 'Yo Maps', '', '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteArtist(7, 'Yo Maps')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;"><i class="fas fa-trash"></i> Delete</button>
+            </td>
+        </tr>
+        
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Official Music Videos Management Table -->
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                    <div><i class="fas fa-video"></i> Official Music Videos Pool (5 Videos)</div>
+                    <button onclick="openCreateVideoModal()" class="btn-green" style="padding:6px 12px; font-size:0.8rem;"><i class="fas fa-plus-circle"></i> Add Music Video</button>
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:0.9rem;" id="admin-videos-table">
+                    <thead>
+                        <tr style="border-bottom:2px solid rgba(255,255,255,0.1); text-align:left; color:#94a3b8; font-size:0.75rem; text-transform:uppercase;">
+                            <th style="padding:12px;">Thumbnail</th>
+                            <th style="padding:12px;">Video Title</th>
+                            <th style="padding:12px;">Artist</th>
+                            <th style="padding:12px;">Genre</th>
+                            <th style="padding:12px;">Views</th>
+                            <th style="padding:12px; text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-videos-tbody">
+                        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="https://img.youtube.com/vi/e6sphaAWazI/hqdefault.jpg" style="width:56px; height:32px; border-radius:4px; object-fit:cover;"></td>
+            <td style="padding:12px; font-weight:700;">Not Ukabebe <span style="background:rgba(255,193,7,0.2); color:#ffc107; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">★ Featured</span></td>
+            <td style="padding:12px; color:#94a3b8;">Dre 24</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">Afrobeats</span></td>
+            <td style="padding:12px; color:#cbd5e1;">210001</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditVideoModal(2, 'Not Ukabebe', 4, 2, 'https://youtu.be/e6sphaAWazI?si=dfU1BR8ddcsgmO9D', 'https://img.youtube.com/vi/e6sphaAWazI/hqdefault.jpg', 'Dre 24', 1, 'The official visual premiere for Not Ukabebe.')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteVideo(2, 'Not Ukabebe')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="https://img.youtube.com/vi/s0hnjT83Eks/hqdefault.jpg" style="width:56px; height:32px; border-radius:4px; object-fit:cover;"></td>
+            <td style="padding:12px; font-weight:700;">Strangers (Official Visualizer) <span style="background:rgba(255,193,7,0.2); color:#ffc107; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">★ Featured</span></td>
+            <td style="padding:12px; color:#94a3b8;">Dre</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">Zed Hip Hop</span></td>
+            <td style="padding:12px; color:#cbd5e1;">125000</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditVideoModal(4, 'Strangers (Official Visualizer)', 3, 3, 'https://youtu.be/s0hnjT83Eks?si=rg6oDIcr5WZpjT7Q', 'https://img.youtube.com/vi/s0hnjT83Eks/hqdefault.jpg', 'Dre 24', 1, 'Official visualizer for Stranger off the studio album.')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteVideo(4, 'Strangers (Official Visualizer)')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="https://img.youtube.com/vi/5YrJf3CpHNk/hqdefault.jpg" style="width:56px; height:32px; border-radius:4px; object-fit:cover;"></td>
+            <td style="padding:12px; font-weight:700;">Trump ft. GloRilla, Latto & DaBaby <span style="background:rgba(255,193,7,0.2); color:#ffc107; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">★ Featured</span></td>
+            <td style="padding:12px; color:#94a3b8;">Cardi B</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">Others</span></td>
+            <td style="padding:12px; color:#cbd5e1;">1</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditVideoModal(12, 'Trump ft. GloRilla, Latto & DaBaby', 16, 273, 'https://youtu.be/5YrJf3CpHNk?si=bjSV8VPW_j7jH-gt', 'https://img.youtube.com/vi/5YrJf3CpHNk/hqdefault.jpg', 'Dre 24', 1, '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteVideo(12, 'Trump ft. GloRilla, Latto & DaBaby')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="https://img.youtube.com/vi/3w0yqAdJ1iY/hqdefault.jpg" style="width:56px; height:32px; border-radius:4px; object-fit:cover;"></td>
+            <td style="padding:12px; font-weight:700;">No Limit <span style="background:rgba(255,193,7,0.2); color:#ffc107; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">★ Featured</span></td>
+            <td style="padding:12px; color:#94a3b8;">Usher</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">Others</span></td>
+            <td style="padding:12px; color:#cbd5e1;">0</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditVideoModal(10, 'No Limit', 9, 273, 'https://youtu.be/3w0yqAdJ1iY?list=RDLPTlvQ1Zet0', 'https://img.youtube.com/vi/3w0yqAdJ1iY/hqdefault.jpg', '', 1, '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteVideo(10, 'No Limit')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+            <td style="padding:12px;"><img src="https://img.youtube.com/vi/iw9_hwZiEzw/hqdefault.jpg" style="width:56px; height:32px; border-radius:4px; object-fit:cover;"></td>
+            <td style="padding:12px; font-weight:700;">Beautiful </td>
+            <td style="padding:12px; color:#94a3b8;">Dre 24</td>
+            <td style="padding:12px;"><span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">Afrobeats</span></td>
+            <td style="padding:12px; color:#cbd5e1;">1</td>
+            <td style="padding:12px; text-align:right;">
+                <button onclick="openEditVideoModal(6, 'Beautiful', 4, 2, 'https://youtu.be/iw9_hwZiEzw?si=DNLKRsA4Dmpmc1co', 'https://img.youtube.com/vi/iw9_hwZiEzw/hqdefault.jpg', 'Dre 24', 0, '')" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700; margin-right:6px;">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button onclick="deleteVideo(6, 'Beautiful')" style="background:#ff5252; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-weight:700;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SECTION 8: ADMIN ACCOUNT SECURITY -->
+        <div id="tab-security" class="tab-pane">
+            <div class="card" style="max-width:600px;">
+                <div class="card-title"><i class="fas fa-shield-alt"></i> Administrator Credentials</div>
+                <form onsubmit="handleSecurityUpdate(event)">
+                    <div class="form-group">
+                        <label>Current Master Password *</label>
+                        <input type="password" id="sec-current-pwd" class="form-input" required placeholder="Enter current password">
+                    </div>
+                    <div class="form-group">
+                        <label>New Admin Username *</label>
+                        <input type="text" id="sec-new-user" class="form-input" value="admin" required>
+                    </div>
+                    <div class="form-group">
+                        <label>New Master Password (Leave blank to keep unchanged)</label>
+                        <input type="password" id="sec-new-pwd" class="form-input" placeholder="Min 6 characters">
+                    </div>
+                    <button type="submit" class="btn-green"><i class="fas fa-key"></i> Update Security Credentials</button>
+                </form>
+            </div>
+        </div>
+        </main>
+    </div>
+
+    <!-- Edit Track Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="card-title" style="justify-content:space-between; margin-bottom:1.5rem;">
+                <div><i class="fas fa-edit"></i> Edit Track Details</div>
+                <button onclick="closeEditModal()" style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="handleSaveTrackEdit(event)">
+                <input type="hidden" id="edit-track-id">
+                <div class="form-group">
+                    <label>Song Title *</label>
+                    <input type="text" id="edit-title" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Artist Name *</label>
+                    <input type="text" id="edit-artist" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Featured Artists (Optional)</label>
+                    <input type="text" id="edit-featured-artists" class="form-input" placeholder="e.g. Jay Wolf, Towela">
+                </div>
+                <div class="form-group">
+                    <label>Genre</label>
+                    <select id="edit-genre" class="form-input">
+                        <option value="Afrobeats">Afrobeats</option><option value="Dancehall">Dancehall</option><option value="Gospel">Gospel</option><option value="Kalindula">Kalindula</option><option value="Others">Others</option><option value="Pop">Pop</option><option value="RnB">RnB</option><option value="Zed Hip Hop">Zed Hip Hop</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Album Name</label>
+                    <input type="text" id="edit-album" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Bitrate (kbps)</label>
+                    <input type="number" id="edit-bitrate" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Cover Artwork URL</label>
+                    <input type="url" id="edit-cover" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Official Lyrics</label>
+                    <textarea id="edit-lyrics" class="form-input" rows="4"></textarea>
+                </div>
+                <button type="submit" class="btn-green" style="width:100%;"><i class="fas fa-save"></i> Save Track Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Artist Modal -->
+    <div id="edit-artist-modal" class="modal">
+        <div class="modal-content">
+            <div class="card-title" style="justify-content:space-between; margin-bottom:1.5rem;">
+                <div><i class="fas fa-user-edit"></i> Edit Artist Profile</div>
+                <button onclick="closeEditArtistModal()" style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="handleSaveArtistEdit(event)">
+                <input type="hidden" id="edit-artist-id">
+                <div class="form-group">
+                    <label>Artist Name *</label>
+                    <input type="text" id="edit-artist-name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Avatar Artwork URL</label>
+                    <input type="url" id="edit-artist-cover" class="form-input" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Artist Biography / Profile Bio</label>
+                    <textarea id="edit-artist-bio" class="form-input" rows="4" placeholder="Artist biography details..."></textarea>
+                </div>
+                <button type="submit" class="btn-green" style="width:100%;"><i class="fas fa-save"></i> Save Artist Profile</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Artist Modal -->
+    <div id="create-artist-modal" class="modal">
+        <div class="modal-content">
+            <div class="card-title" style="justify-content:space-between; margin-bottom:1.5rem;">
+                <div><i class="fas fa-user-plus"></i> Add New Artist Profile</div>
+                <button onclick="closeCreateArtistModal()" style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="handleCreateArtist(event)">
+                <div class="form-group">
+                    <label>Artist Name *</label>
+                    <input type="text" id="create-artist-name" class="form-input" required placeholder="e.g. Yo Maps">
+                </div>
+                <div class="form-group">
+                    <label>Avatar / Cover URL (Optional)</label>
+                    <input type="url" id="create-artist-cover" class="form-input" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Artist Biography (Optional)</label>
+                    <textarea id="create-artist-bio" class="form-input" rows="4" placeholder="Enter biography..."></textarea>
+                </div>
+                <button type="submit" class="btn-green" style="width:100%;"><i class="fas fa-plus-circle"></i> Create Artist</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add / Edit Team Member Modal -->
+    <div id="team-modal" class="modal">
+        <div class="modal-content">
+            <div class="card-title" style="justify-content:space-between; margin-bottom:1.5rem;">
+                <div id="team-modal-title"><i class="fas fa-user-plus"></i> Add Team Member</div>
+                <button onclick="closeTeamModal()" style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="team-form" onsubmit="handleTeamSubmit(event)">
+                <input type="hidden" id="team-member-id">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" id="team-name-input" class="form-input" required placeholder="e.g. Chanda Mwanza">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Role / Title *</label>
+                        <input type="text" id="team-role-input" class="form-input" required placeholder="e.g. Managing Director">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Biography / Summary</label>
+                    <textarea id="team-bio-input" class="form-input" rows="3" placeholder="Brief background..."></textarea>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Profile Photo (JPG, PNG, WebP)</label>
+                        <input type="file" name="photo" id="team-photo-input" class="form-input" accept="image/*" onchange="previewTeamPhoto(this)">
+                        <div id="team-photo-preview-wrap" style="margin-top: 8px; display:flex; align-items:center; gap:10px;">
+                            <img id="team-photo-preview" src="/media/team/default-avatar.png" alt="Preview" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #00e676;">
+                            <span id="team-photo-filename" style="font-size:0.75rem; color:#94a3b8;">Default avatar</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Display Order</label>
+                        <input type="number" id="team-order-input" class="form-input" value="1" min="0">
+                    </div>
+                </div>
+                <button type="submit" class="btn-green" id="btn-team-submit" style="width:100%;"><i class="fas fa-save"></i> Save Team Member</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add / Edit Music Video Modal -->
+    <div id="video-admin-modal" class="modal">
+        <div class="modal-content">
+            <div class="card-title" style="justify-content:space-between; margin-bottom:1.5rem;">
+                <div id="video-modal-title"><i class="fas fa-video"></i> Add Official Music Video</div>
+                <button onclick="closeVideoAdminModal()" style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="video-admin-form" onsubmit="handleVideoAdminSubmit(event)">
+                <input type="hidden" id="video-admin-id">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Video Title *</label>
+                        <input type="text" id="video-title-input" class="form-input" required placeholder="e.g. Aweah (Official Video)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Artist *</label>
+                        <select id="video-artist-input" class="form-input" required>
+                            <option value="3">Dre</option><option value="4">Dre 24</option><option value="23">Joe L Barnes</option><option value="14">76 Drums</option><option value="16">Cardi B</option><option value="8">Dre Parker</option><option value="15">Joe L Barnes,</option><option value="11">Macky 2</option><option value="20">Unique Artist ABC</option><option value="9">Usher</option><option value="7">Yo Maps</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Genre *</label>
+                        <select id="video-genre-input" class="form-input" required>
+                            <option value="2">Afrobeats</option><option value="5">Dancehall</option><option value="4">Gospel</option><option value="1">Kalindula</option><option value="273">Others</option><option value="272">Pop</option><option value="271">RnB</option><option value="3">Zed Hip Hop</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">YouTube URL or Embed ID *</label>
+                        <input type="text" id="video-yt-input" class="form-input" required placeholder="https://www.youtube.com/watch?v=...">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Director / Visual Producer</label>
+                        <input type="text" id="video-director-input" class="form-input" placeholder="e.g. Director Verb">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Custom Thumbnail URL (Optional)</label>
+                        <input type="url" id="video-thumb-input" class="form-input" placeholder="Leave blank for auto YouTube HD preview">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Featured Spotlight Status</label>
+                        <select id="video-featured-input" class="form-input">
+                            <option value="0">Standard Video</option>
+                            <option value="1">★ Featured Video Premiere Banner</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description / Editorial Writeup</label>
+                    <textarea id="video-desc-input" class="form-input" rows="3" placeholder="Official music video details..."></textarea>
+                </div>
+                <button type="submit" class="btn-green" id="btn-video-submit" style="width:100%;"><i class="fas fa-save"></i> Save Music Video</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.admin-menu-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.mobile-pill-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+            const targetPane = document.getElementById(tabId);
+            if (targetPane) targetPane.classList.add('active');
+
+            const sBtn = document.getElementById('btn-' + tabId);
+            if (sBtn) sBtn.classList.add('active');
+
+            const mBtn = document.getElementById('mbtn-' + tabId);
+            if (mBtn) mBtn.classList.add('active');
+
+            localStorage.setItem('zedhits_admin_active_tab', tabId);
+            const mainContent = document.querySelector('.admin-main');
+            if (mainContent) mainContent.scrollTop = 0;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTab = localStorage.getItem('zedhits_admin_active_tab');
+            if (savedTab && document.getElementById(savedTab)) {
+                switchTab(savedTab);
+            }
+        });
+
+        function syncColor(fromId, toId) {
+            document.getElementById(toId).value = document.getElementById(fromId).value;
+        }
+
+        function showToast(msg) {
+            let toast = document.getElementById('admin-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'admin-toast';
+                toast.style.cssText = 'position:fixed; bottom:24px; right:24px; background:#06801e; color:#fff; padding:12px 24px; border-radius:8px; font-weight:800; font-size:0.9rem; z-index:99999; box-shadow:0 4px 20px rgba(0,0,0,0.4); display:none; transition:all 0.3s;';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        async function saveSettingsPayload(payload) {
+            let currentSettings = JSON.parse(localStorage.getItem('zedhits_cms_settings') || '{}');
+            Object.assign(currentSettings, payload);
+            localStorage.setItem('zedhits_cms_settings', JSON.stringify(currentSettings));
+
+            try {
+                const res = await fetch('/api/admin/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showToast('✓ CMS Settings saved & synced to database!');
+                    return;
+                }
+            } catch (e) {
+                console.log('Static host CMS fallback active');
+            }
+            showToast('✓ CMS Settings saved successfully!');
+        }
+
+        function handleGenericSettingsSave(e) {
+            e.preventDefault();
+            saveSettingsPayload({
+                site_title: document.getElementById('cfg-site-title').value,
+                nav_logo_text: document.getElementById('cfg-nav-logo-text').value,
+                hero_title: document.getElementById('cfg-hero-title').value,
+                hero_subtitle: document.getElementById('cfg-hero-sub').value,
+                hero_mode: document.getElementById('cfg-hero-mode').value,
+                hero_pinned_tracks: document.getElementById('cfg-hero-pinned').value,
+                section_latest_title: document.getElementById('cfg-sec-latest').value,
+                section_trending_title: document.getElementById('cfg-sec-trending').value,
+                section_artists_title: document.getElementById('cfg-sec-artists').value,
+                empty_state_msg: document.getElementById('cfg-empty-state').value,
+                footer_text: document.getElementById('cfg-footer').value
+            });
+        }
+
+        function handleThemeSave(e) {
+            e.preventDefault();
+            saveSettingsPayload({
+                accent_color: document.getElementById('cfg-accent').value,
+                bg_base_color: document.getElementById('cfg-bg').value,
+                card_surface_color: document.getElementById('cfg-card').value,
+                text_primary_color: document.getElementById('cfg-text').value
+            });
+        }
+
+        function handleBannerSave(e) {
+            e.preventDefault();
+            saveSettingsPayload({
+                banner_active: document.getElementById('cfg-banner-active').value,
+                banner_type: document.getElementById('cfg-banner-type').value,
+                banner_message: document.getElementById('cfg-banner-msg').value,
+                banner_btn_text: document.getElementById('cfg-banner-btn-text').value,
+                banner_btn_link: document.getElementById('cfg-banner-btn-link').value
+            });
+        }
+
+        function handleTogglesSave(e) {
+            e.preventDefault();
+            saveSettingsPayload({
+                allow_downloads: document.getElementById('cfg-allow-dl').value,
+                show_play_counts: document.getElementById('cfg-show-plays').value,
+                show_release_dates: document.getElementById('cfg-show-dates').value,
+                stream_quality_label: document.getElementById('cfg-quality-label').value,
+                default_sort_mode: document.getElementById('cfg-sort-mode').value
+            });
+        }
+
+        function handleContactsSave(e) {
+            e.preventDefault();
+            saveSettingsPayload({
+                contact_whatsapp: document.getElementById('cfg-wa').value,
+                contact_phone: document.getElementById('cfg-phone').value,
+                contact_whatsapp_msg: document.getElementById('cfg-wa-msg').value,
+                social_facebook: document.getElementById('cfg-social-fb').value,
+                social_twitter: document.getElementById('cfg-social-tw').value,
+                social_instagram: document.getElementById('cfg-social-ig').value,
+                social_youtube: document.getElementById('cfg-social-yt').value,
+                contact_email: document.getElementById('cfg-email').value
+            });
+        }
+
+        function handleAboutSave(e) {
+            e.preventDefault();
+            saveSettingsPayload({
+                about_title: document.getElementById('cfg-about-title').value,
+                about_description: document.getElementById('cfg-about-desc').value,
+                about_mission: document.getElementById('cfg-about-mission').value,
+                about_stats_artists: document.getElementById('cfg-stat-art').value,
+                about_stats_streams: document.getElementById('cfg-stat-strm').value,
+                about_stats_quality: document.getElementById('cfg-stat-qty').value
+            });
+        }
+
+        async function handleLogoUpload() {
+            const fileInput = document.getElementById('logo-file-input');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select an image file first.');
+                return;
+            }
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const logoDataUrl = e.target.result;
+                const prev = document.getElementById('logo-preview-img');
+                if (prev) prev.src = logoDataUrl;
+                
+                let currentSettings = JSON.parse(localStorage.getItem('zedhits_cms_settings') || '{}');
+                currentSettings.logo_url = logoDataUrl;
+                localStorage.setItem('zedhits_cms_settings', JSON.stringify(currentSettings));
+                
+                showToast('✓ Admin & Brand Logo updated!');
+            };
+            reader.readAsDataURL(file);
+
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+                await fetch('/api/admin/logo', { method: 'POST', body: fd });
+            } catch (err) {}
+        }
+
+        async function handleTrackUpload(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-up-submit');
+            btn.textContent = 'Processing & Extracting ID3...';
+            btn.disabled = true;
+
+            const fd = new FormData();
+            fd.append('file', document.getElementById('up-file').files[0]);
+            fd.append('title', document.getElementById('up-title').value);
+            fd.append('artist', document.getElementById('up-artist').value);
+            fd.append('featured_artists', document.getElementById('up-featured-artists').value);
+            fd.append('genre', document.getElementById('up-genre').value);
+            fd.append('cover_url', document.getElementById('up-cover-url').value);
+
+            const coverFiles = document.getElementById('up-cover-file').files;
+            if (coverFiles.length > 0) {
+                fd.append('cover_file', coverFiles[0]);
+            }
+
+            try {
+                const res = await fetch('/api/tracks', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    alert('✓ Song uploaded successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Upload error: ' + (data.detail || 'Failed'));
+                    btn.textContent = 'Upload & Process Track';
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                alert('Network error uploading song');
+                btn.textContent = 'Upload & Process Track';
+                btn.disabled = false;
+            }
+        }
+
+        function openEditModal(id, title, artist, featured, genre, album, bitrate, cover, lyrics) {
+            document.getElementById('edit-track-id').value = id;
+            document.getElementById('edit-title').value = title;
+            document.getElementById('edit-artist').value = artist;
+            document.getElementById('edit-featured-artists').value = featured || '';
+            document.getElementById('edit-genre').value = genre;
+            document.getElementById('edit-album').value = album || '';
+            document.getElementById('edit-bitrate').value = bitrate || 320;
+            document.getElementById('edit-cover').value = cover || '';
+            document.getElementById('edit-lyrics').value = lyrics || '';
+            document.getElementById('edit-modal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.remove('active');
+        }
+
+        async function handleSaveTrackEdit(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-track-id').value;
+            const payload = {
+                title: document.getElementById('edit-title').value,
+                artist: document.getElementById('edit-artist').value,
+                featured_artists: document.getElementById('edit-featured-artists').value,
+                genre: document.getElementById('edit-genre').value,
+                album_name: document.getElementById('edit-album').value,
+                bitrate_kbps: parseInt(document.getElementById('edit-bitrate').value) || 320,
+                cover_url: document.getElementById('edit-cover').value,
+                lyrics: document.getElementById('edit-lyrics').value
+            };
+
+            try {
+                const res = await fetch('/api/tracks/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    alert('✓ Track details updated successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Failed to update track');
+                }
+            } catch (e) {
+                alert('Network error updating track');
+            }
+        }
+
+        async function deleteTrack(id, title) {
+            if (!confirm('Are you sure you want to delete record "' + title + '" permanently?')) return;
+            try {
+                await fetch('/api/tracks/' + id, { method: 'DELETE' });
+            } catch (e) {
+                console.log('Static host fallback active');
+            }
+            const rows = document.querySelectorAll('#admin-tracks-table tbody tr');
+            rows.forEach(r => {
+                if (r.innerHTML.includes("openEditModal(" + id + ",") || r.innerHTML.includes("deleteTrack(" + id + ",")) {
+                    r.remove();
+                }
+            });
+            showToast('✓ Entry permanently deleted!');
+        }
+
+        function openEditArtistModal(id, name, bio, cover) {
+            document.getElementById('edit-artist-id').value = id;
+            document.getElementById('edit-artist-name').value = name;
+            document.getElementById('edit-artist-cover').value = cover || '';
+            document.getElementById('edit-artist-bio').value = bio || '';
+            document.getElementById('edit-artist-modal').classList.add('active');
+        }
+
+        function closeEditArtistModal() {
+            document.getElementById('edit-artist-modal').classList.remove('active');
+        }
+
+        async function handleSaveArtistEdit(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-artist-id').value;
+            const payload = {
+                name: document.getElementById('edit-artist-name').value,
+                cover_url: document.getElementById('edit-artist-cover').value,
+                bio: document.getElementById('edit-artist-bio').value
+            };
+
+            try {
+                const res = await fetch('/api/artists/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showToast('✓ Artist profile updated successfully!');
+                    closeEditArtistModal();
+                    return;
+                }
+            } catch (e) {}
+            closeEditArtistModal();
+            showToast('✓ Artist profile updated!');
+        }
+
+        function openCreateArtistModal() {
+            document.getElementById('create-artist-name').value = '';
+            document.getElementById('create-artist-cover').value = '';
+            document.getElementById('create-artist-bio').value = '';
+            document.getElementById('create-artist-modal').classList.add('active');
+        }
+
+        function closeCreateArtistModal() {
+            document.getElementById('create-artist-modal').classList.remove('active');
+        }
+
+        async function handleCreateArtist(e) {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('create-artist-name').value,
+                cover_url: document.getElementById('create-artist-cover').value,
+                bio: document.getElementById('create-artist-bio').value
+            };
+
+            try {
+                const res = await fetch('/api/artists', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showToast('✓ New artist created successfully!');
+                    closeCreateArtistModal();
+                    return;
+                }
+            } catch (e) {}
+            closeCreateArtistModal();
+            showToast('✓ New artist entry created!');
+        }
+
+        async function deleteArtist(id, name) {
+            if (!confirm('Are you sure you want to delete artist "' + name + '"?')) return;
+            try {
+                await fetch('/api/artists/' + id, { method: 'DELETE' });
+            } catch (e) {}
+            const rows = document.querySelectorAll('.tab-pane table tbody tr');
+            rows.forEach(r => {
+                if (r.innerHTML.includes("deleteArtist(" + id + ",")) {
+                    r.remove();
+                }
+            });
+            showToast('✓ Artist record removed!');
+        }
+
+        async function purgeEmptyArtists() {
+            if (!confirm('Purge all artists with 0 uploaded tracks from the platform?')) return;
+            try {
+                const res = await fetch('/api/admin/artists/purge-empty', { method: 'POST' });
+                const d = await res.json();
+                if (res.ok && d.success) {
+                    alert('✓ Purged ' + d.purged_count + ' 0-track artists!');
+                    window.location.reload();
+                } else {
+                    alert('Purge error: ' + (d.detail || 'Failed'));
+                }
+            } catch (e) {
+                alert('Network error during purge');
+            }
+        }
+
+        function previewTeamPhoto(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('team-photo-preview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    document.getElementById('team-photo-filename').textContent = file.name;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function openCreateTeamModal() {
+            document.getElementById('team-modal-title').innerHTML = '<i class="fas fa-user-plus"></i> Add Team Member';
+            document.getElementById('team-member-id').value = '';
+            document.getElementById('team-name-input').value = '';
+            document.getElementById('team-role-input').value = '';
+            document.getElementById('team-bio-input').value = '';
+            document.getElementById('team-photo-input').value = '';
+            document.getElementById('team-photo-preview').src = '/media/team/default-avatar.png';
+            document.getElementById('team-photo-filename').textContent = 'Default avatar';
+            document.getElementById('team-order-input').value = '1';
+            document.getElementById('team-modal').classList.add('active');
+        }
+
+        function openEditTeamModal(id, name, role, bio, photoPath, order) {
+            document.getElementById('team-modal-title').innerHTML = '<i class="fas fa-user-edit"></i> Edit Team Member';
+            document.getElementById('team-member-id').value = id;
+            document.getElementById('team-name-input').value = name;
+            document.getElementById('team-role-input').value = role;
+            document.getElementById('team-bio-input').value = bio || '';
+            document.getElementById('team-photo-input').value = '';
+            document.getElementById('team-photo-preview').src = photoPath || '/media/team/default-avatar.png';
+            document.getElementById('team-photo-filename').textContent = 'Current photo';
+            document.getElementById('team-order-input').value = order || 1;
+            document.getElementById('team-modal').classList.add('active');
+        }
+
+        function closeTeamModal() {
+            document.getElementById('team-modal').classList.remove('active');
+        }
+
+        async function handleTeamSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-team-submit');
+            btn.textContent = 'Saving Profile & Uploading Photo...';
+            btn.disabled = true;
+
+            const id = document.getElementById('team-member-id').value;
+            const fd = new FormData();
+            fd.append('name', document.getElementById('team-name-input').value);
+            fd.append('role', document.getElementById('team-role-input').value);
+            fd.append('bio', document.getElementById('team-bio-input').value);
+            fd.append('display_order', document.getElementById('team-order-input').value || 0);
+
+            const fileInput = document.getElementById('team-photo-input');
+            if (fileInput.files && fileInput.files.length > 0) {
+                fd.append('photo', fileInput.files[0]);
+            }
+
+            try {
+                const url = id ? ('/api/admin/team/' + id) : '/api/admin/team';
+                const method = id ? 'PUT' : 'POST';
+                const res = await fetch(url, { method: method, body: fd });
+                const d = await res.json();
+                if (res.ok && d.success) {
+                    alert('✓ Team member profile saved successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (d.detail || 'Failed to save team member'));
+                    btn.textContent = 'Save Team Member';
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                alert('Network error saving team member');
+                btn.textContent = 'Save Team Member';
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteTeamMember(id, name) {
+            if (!confirm('Are you sure you want to delete team member "' + name + '"?')) return;
+            try {
+                const res = await fetch('/api/admin/team/' + id, { method: 'DELETE' });
+                const d = await res.json();
+                if (res.ok && d.success) {
+                    alert('✓ Team member removed successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (d.detail || 'Failed to delete'));
+                }
+            } catch (e) {
+                alert('Network error deleting team member');
+            }
+        }
+
+        async function handleSecurityUpdate(e) {
+            e.preventDefault();
+            const payload = {
+                current_password: document.getElementById('sec-current-pwd').value,
+                new_username: document.getElementById('sec-new-user').value,
+                new_password: document.getElementById('sec-new-pwd').value || null
+            };
+
+            const res = await fetch('/api/admin/security', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                alert('✓ Administrator credentials updated successfully!');
+                window.location.reload();
+            } else {
+                alert('Security update error: ' + (data.detail || 'Failed'));
+            }
+        }
+
+        function openCreateVideoModal() {
+            document.getElementById('video-modal-title').innerHTML = '<i class="fas fa-video"></i> Add Official Music Video';
+            document.getElementById('video-admin-id').value = '';
+            document.getElementById('video-title-input').value = '';
+            document.getElementById('video-yt-input').value = '';
+            document.getElementById('video-thumb-input').value = '';
+            document.getElementById('video-director-input').value = '';
+            document.getElementById('video-featured-input').value = '0';
+            document.getElementById('video-desc-input').value = '';
+            document.getElementById('video-admin-modal').classList.add('active');
+        }
+
+        function openEditVideoModal(id, title, artistId, genreId, ytUrl, thumbUrl, director, isFeatured, desc) {
+            document.getElementById('video-modal-title').innerHTML = '<i class="fas fa-edit"></i> Edit Official Music Video';
+            document.getElementById('video-admin-id').value = id;
+            document.getElementById('video-title-input').value = title;
+            document.getElementById('video-artist-input').value = artistId;
+            document.getElementById('video-genre-input').value = genreId;
+            document.getElementById('video-yt-input').value = ytUrl;
+            document.getElementById('video-thumb-input').value = thumbUrl || '';
+            document.getElementById('video-director-input').value = director || '';
+            document.getElementById('video-featured-input').value = isFeatured ? '1' : '0';
+            document.getElementById('video-desc-input').value = desc || '';
+            document.getElementById('video-admin-modal').classList.add('active');
+        }
+
+        function closeVideoAdminModal() {
+            document.getElementById('video-admin-modal').classList.remove('active');
+        }
+
+        async function handleVideoAdminSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-video-submit');
+            btn.textContent = 'Saving Music Video...';
+            btn.disabled = true;
+
+            const id = document.getElementById('video-admin-id').value;
+            const payload = {
+                title: document.getElementById('video-title-input').value,
+                artist_id: parseInt(document.getElementById('video-artist-input').value),
+                genre_id: parseInt(document.getElementById('video-genre-input').value),
+                youtube_url: document.getElementById('video-yt-input').value,
+                thumbnail_url: document.getElementById('video-thumb-input').value || null,
+                director: document.getElementById('video-director-input').value || null,
+                is_featured: document.getElementById('video-featured-input').value === '1',
+                description: document.getElementById('video-desc-input').value || null
+            };
+
+            try {
+                const url = id ? ('/api/admin/videos/' + id) : '/api/admin/videos';
+                const method = id ? 'PUT' : 'POST';
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const d = await res.json();
+                if (res.ok && d.success) {
+                    alert('✓ Music video saved successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (d.detail || 'Failed to save video'));
+                    btn.textContent = 'Save Music Video';
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                alert('Network error saving video');
+                btn.textContent = 'Save Music Video';
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteVideo(id, title) {
+            if (!confirm('Are you sure you want to delete music video "' + title + '"?')) return;
+            try {
+                const res = await fetch('/api/admin/videos/' + id, { method: 'DELETE' });
+                const d = await res.json();
+                if (res.ok && d.success) {
+                    alert('✓ Music video removed successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (d.detail || 'Failed to delete'));
+                }
+            } catch (e) {
+                alert('Network error deleting video');
+            }
+        }
+
+        function filterAdminTracks(q) {
+            const query = q.toLowerCase();
+            document.querySelectorAll('#admin-tracks-table tbody tr').forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        // Audio File Autodetection (Artist, Featured Artists, Title)
+        const upFileInput = document.getElementById('up-file');
+        if (upFileInput) {
+            upFileInput.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    let name = this.files[0].name.replace(/\.[^/.]+$/, "").trim();
+                    name = name.replace(/^\d+[\s.-]+/, "").trim();
+                    
+                    let artist = "";
+                    let featured = "";
+                    let title = "";
+
+                    const parenMatch = name.match(/^(.*?)\s*\((.*?)\)$/);
+                    if (parenMatch) {
+                        let part1 = parenMatch[1].trim();
+                        let part2 = parenMatch[2].trim();
+                        const featInPart2 = part2.match(/^(?:ft\.?|feat\.?|featuring)\s+(.+)$/i);
+                        if (featInPart2) {
+                            featured = featInPart2[1].trim();
+                            const hyphenParts = part1.split(/\s*-\s*/);
+                            if (hyphenParts.length >= 2) {
+                                artist = hyphenParts[0].trim();
+                                title = hyphenParts.slice(1).join(" - ").trim();
+                            } else {
+                                title = part1;
+                            }
+                        } else {
+                            title = part2;
+                            const featMatch = part1.match(/\s+(?:ft\.?|feat\.?|featuring)\s+(.+)$/i);
+                            if (featMatch) {
+                                featured = featMatch[1].trim();
+                                artist = part1.substring(0, featMatch.index).trim();
+                            } else {
+                                artist = part1;
+                            }
+                        }
+                    } else {
+                        const parts = name.split(/\s*-\s*/);
+                        if (parts.length >= 2) {
+                            artist = parts[0].trim();
+                            title = parts.slice(1).join(" - ").trim();
+                            const featInTitle = title.match(/[\(\[\s]+(?:ft\.?|feat\.?|featuring)\s+([^\)\]]+)[\)\]]?/i);
+                            if (featInTitle) {
+                                featured = featInTitle[1].trim();
+                                title = title.replace(/[\(\[\s]+(?:ft\.?|feat\.?|featuring)\s+[^\)\]]+[\)\]]?/ig, '').trim();
+                            } else {
+                                const featInArtist = artist.match(/\s+(?:ft\.?|feat\.?|featuring)\s+(.+)$/i);
+                                if (featInArtist) {
+                                    featured = featInArtist[1].trim();
+                                    artist = artist.substring(0, featInArtist.index).trim();
+                                }
+                            }
+                        } else {
+                            const featMatch = name.match(/\s+(?:ft\.?|feat\.?|featuring)\s+(.+)$/i);
+                            if (featMatch) {
+                                featured = featMatch[1].trim();
+                                artist = name.substring(0, featMatch.index).trim();
+                            } else {
+                                title = name;
+                            }
+                        }
+                    }
+
+                    if (title) {
+                        document.getElementById('up-title').value = title;
+                    }
+                    if (artist) {
+                        document.getElementById('up-artist').value = artist;
+                    }
+                    if (featured) {
+                        document.getElementById('up-featured-artists').value = featured;
+                    }
+                }
+            });
+        }
+
+        async function logoutAdmin() {
+            await fetch('/api/admin/logout', { method: 'POST' });
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>

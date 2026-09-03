@@ -1,0 +1,70 @@
+{
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "runtime": "python311",
+      "ignore": [
+        "v-env",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    }
+  ],
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "functions/**",
+      "*.py",
+      "*.bat",
+      "*.db",
+      "*.sql",
+      "__pycache__/**",
+      "brain/**",
+      "Use/**",
+      "media/tracks/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/music",
+        "destination": "/music.html"
+      },
+      {
+        "source": "/videos",
+        "destination": "/videos.html"
+      },
+      {
+        "source": "/albums",
+        "destination": "/albums.html"
+      },
+      {
+        "source": "/album",
+        "destination": "/albums.html"
+      },
+      {
+        "source": "/artists",
+        "destination": "/artists.html"
+      },
+      {
+        "source": "/about",
+        "destination": "/about.html"
+      },
+      {
+        "source": "/admin",
+        "destination": "/admin.html"
+      },
+      {
+        "source": "/admin/**",
+        "destination": "/admin.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

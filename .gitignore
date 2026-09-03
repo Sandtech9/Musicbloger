@@ -14,8 +14,9 @@ venv/
 ENV/
 env/
 
-# Firebase & Logs
+# Firebase & Deployment Caches
 .firebase/
+.vercel/
 firebase-debug.log
 *.log
 

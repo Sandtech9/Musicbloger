@@ -8,16 +8,37 @@ import secrets
 from typing import Optional, List, Dict, Any, Tuple
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DB_FILE = os.path.join(BASE_DIR, "zedhits.db")
+ORIGINAL_DB_FILE = os.path.join(BASE_DIR, "zedhits.db")
 SCHEMA_FILE = os.path.join(BASE_DIR, "schema.sql")
+
+def get_db_path() -> str:
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        tmp_db = os.path.join("/tmp", "zedhits.db")
+        if not os.path.exists(tmp_db):
+            if os.path.exists(ORIGINAL_DB_FILE):
+                import shutil
+                try:
+                    shutil.copy2(ORIGINAL_DB_FILE, tmp_db)
+                except Exception:
+                    pass
+        return tmp_db
+    return ORIGINAL_DB_FILE
 
 def get_connection() -> sqlite3.Connection:
     """Creates a thread-safe connection with PRAGMA foreign_keys enforced."""
-    conn = sqlite3.connect(DB_FILE, timeout=30.0, check_same_thread=False)
+    target_db = get_db_path()
+    conn = sqlite3.connect(target_db, timeout=30.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON;")
-    conn.execute("PRAGMA journal_mode = WAL;")
+    try:
+        conn.execute("PRAGMA foreign_keys = ON;")
+    except Exception:
+        pass
+    try:
+        conn.execute("PRAGMA journal_mode = WAL;")
+    except Exception:
+        pass
     return conn
+
 
 # ----------------------------------------------------------------------------
 # PBKDF2 Password Utilities (100,000 Iterations)

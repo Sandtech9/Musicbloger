@@ -28,10 +28,14 @@ COVERS_DIR = os.path.join(BASE_DIR, "media", "covers")
 TEAM_DIR = os.path.join(BASE_DIR, "media", "team")
 TEMP_DIR = os.path.join(BASE_DIR, "media", "temp")
 
-os.makedirs(MEDIA_DIR, exist_ok=True)
-os.makedirs(COVERS_DIR, exist_ok=True)
-os.makedirs(TEAM_DIR, exist_ok=True)
-os.makedirs(TEMP_DIR, exist_ok=True)
+try:
+    os.makedirs(MEDIA_DIR, exist_ok=True)
+    os.makedirs(COVERS_DIR, exist_ok=True)
+    os.makedirs(TEAM_DIR, exist_ok=True)
+    os.makedirs(TEMP_DIR, exist_ok=True)
+except Exception:
+    pass
+
 
 SESSION_STORE: Dict[str, str] = {}
 

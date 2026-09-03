@@ -1,0 +1,57 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/track/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/artist/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/video/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/embed/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/music",
+      "destination": "/music.html"
+    },
+    {
+      "source": "/videos",
+      "destination": "/videos.html"
+    },
+    {
+      "source": "/albums",
+      "destination": "/albums.html"
+    },
+    {
+      "source": "/album",
+      "destination": "/albums.html"
+    },
+    {
+      "source": "/artists",
+      "destination": "/artists.html"
+    },
+    {
+      "source": "/about",
+      "destination": "/about.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/admin/(.*)",
+      "destination": "/admin.html"
+    }
+  ]
+}

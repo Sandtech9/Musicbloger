@@ -316,6 +316,7 @@ async def get_artists_list():
     return db.get_artists(only_with_tracks=False)
 
 @app.post("/api/artists")
+@app.post("/api/admin/artists")
 async def create_new_artist(payload: ArtistCreateRequest, admin: str = Depends(require_admin)):
     if not payload.name.strip():
         raise HTTPException(status_code=400, detail="Artist name is required")
@@ -323,6 +324,7 @@ async def create_new_artist(payload: ArtistCreateRequest, admin: str = Depends(r
     return {"success": True, "artist": artist}
 
 @app.put("/api/artists/{artist_id}")
+@app.put("/api/admin/artists/{artist_id}")
 async def edit_artist_profile(artist_id: int, payload: ArtistUpdateRequest, admin: str = Depends(require_admin)):
     updated = db.update_artist(artist_id, name=payload.name, bio=payload.bio, cover_url=payload.cover_url)
     if not updated:
@@ -330,6 +332,7 @@ async def edit_artist_profile(artist_id: int, payload: ArtistUpdateRequest, admi
     return {"success": True, "artist": updated}
 
 @app.delete("/api/artists/{artist_id}")
+@app.delete("/api/admin/artists/{artist_id}")
 async def delete_artist_entry(artist_id: int, admin: str = Depends(require_admin)):
     success = db.delete_artist(artist_id)
     if not success:
@@ -677,6 +680,7 @@ async def stream_artist_discography_zip(artist_id: int):
     )
 
 @app.post("/api/tracks", status_code=status.HTTP_201_CREATED)
+@app.post("/api/admin/tracks", status_code=status.HTTP_201_CREATED)
 async def upload_audio_track(
     file: Optional[UploadFile] = File(None),
     audio_url: Optional[str] = Form(None),
@@ -829,6 +833,7 @@ async def upload_audio_track(
 
 @app.put("/api/tracks/{track_id}")
 @app.put("/api/admin/media/{track_id}")
+@app.put("/api/admin/tracks/{track_id}")
 async def edit_track(track_id: int, payload: TrackUpdateRequest, admin: str = Depends(require_admin)):
     final_featured = payload.featured_artists if payload.featured_artists is not None else payload.featuredArtists
     final_genre = payload.genre if payload.genre is not None else payload.category
@@ -851,6 +856,8 @@ async def edit_track(track_id: int, payload: TrackUpdateRequest, admin: str = De
     return {"success": True, "track": updated}
 
 @app.delete("/api/tracks/{track_id}")
+@app.delete("/api/admin/media/{track_id}")
+@app.delete("/api/admin/tracks/{track_id}")
 async def delete_track(track_id: int, admin: str = Depends(require_admin)):
     storage_path = db.delete_track(track_id)
     if not storage_path:
@@ -3094,6 +3101,9 @@ async def admin_control_panel(request: Request):
                 }});
                 const data = await res.json();
                 if (res.ok && data.success) {{
+                    if (data.token) {{
+                        localStorage.setItem('zedhits_admin_token', data.token);
+                    }}
                     window.location.reload();
                 }} else {{
                     err.textContent = data.detail || 'Authentication failed';

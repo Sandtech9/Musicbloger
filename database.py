@@ -149,49 +149,6 @@ def init_db():
             with open(default_avatar_file, "wb") as f:
                 f.write(b)
 
-        # Seed initial default team members if table is empty
-        cursor.execute("SELECT COUNT(*) as count FROM team_members")
-        if cursor.fetchone()["count"] == 0:
-            default_team = [
-                ("Chanda Mwanza", "Managing Director & Founder", "Passionate about empowering Zambian musical talent and digital distribution innovations.", "/media/team/default-avatar.png", "{}", 1),
-                ("Mutale Banda", "Head of Music Licensing & A&R", "Bridging artists with streaming platforms, synchronization rights, and global playlists.", "/media/team/default-avatar.png", "{}", 2),
-                ("Kondwani Phiri", "Lead Audio Engineer & Infrastructure", "Specializing in high-fidelity 320kbps lossless audio encoding and CDN stream delivery.", "/media/team/default-avatar.png", "{}", 3)
-            ]
-            for m in default_team:
-                conn.execute(
-                    "INSERT INTO team_members (name, role, bio, photo_path, social_links, display_order) VALUES (?, ?, ?, ?, ?, ?)",
-                    m
-                )
-            conn.commit()
-
-        # Seed default videos if table is empty
-        cursor.execute("SELECT COUNT(*) as count FROM videos")
-        if cursor.fetchone()["count"] == 0:
-            # Query existing artists
-            a_map = {r["name"].lower(): r["id"] for r in conn.execute("SELECT id, name FROM artists").fetchall()}
-            g_map = {r["slug"].lower(): r["id"] for r in conn.execute("SELECT id, slug FROM genres").fetchall()}
-            default_genre_id = list(g_map.values())[0] if g_map else 1
-            afro_id = g_map.get("afrobeats", default_genre_id)
-            hiphop_id = g_map.get("zed-hip-hop", default_genre_id)
-            gospel_id = g_map.get("gospel", default_genre_id)
-
-            def get_a_id(name):
-                return a_map.get(name.lower(), list(a_map.values())[0] if a_map else 1)
-
-            sample_videos = [
-                ("Aweah (Official Music Video)", get_a_id("Yo Maps"), afro_id, "https://www.youtube.com/watch?v=kXYiU_JCYtU", "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80", "Director Verb", 215, 142000, 32000, 1, "Official HD music video for Aweah by Yo Maps."),
-                ("Mr Romantic (Official Video)", get_a_id("Yo Maps"), afro_id, "https://www.youtube.com/watch?v=9bZkp7q19f0", "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80", "Director K-Blaze", 230, 210000, 48000, 1, "The official visual premiere for Mr Romantic."),
-                ("Early Riser (Official Video)", get_a_id("Macky 2"), hiphop_id, "https://www.youtube.com/watch?v=3JZ_D3ELwOQ", "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80", "Big Deal Graphix", 195, 98000, 21000, 0, "High energy street hip-hop visuals from Macky 2."),
-                ("Dzuwa (Official Visualizer)", get_a_id("Slapdee"), hiphop_id, "https://www.youtube.com/watch?v=L_XJ_s5IsQc", "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=800&q=80", "The Visual Factory", 208, 125000, 27000, 1, "Official visualizer for Dzuwa off the studio album."),
-                ("Nobody (Music Video)", get_a_id("Chef 187"), hiphop_id, "https://www.youtube.com/watch?v=RgKAFK5djSk", "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=800&q=80", "No ID Media", 222, 175000, 39000, 0, "Chef 187 delivers a cinematic masterpiece in Nobody.")
-            ]
-            for v in sample_videos:
-                conn.execute("""
-                    INSERT INTO videos (title, artist_id, genre_id, youtube_url, thumbnail_url, director, duration_seconds, views_count, downloads_count, is_featured, description)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, v)
-            conn.commit()
-
         # Ensure admin_sessions table exists for serverless persistence
         conn.execute("""
             CREATE TABLE IF NOT EXISTS admin_sessions (

@@ -1519,21 +1519,29 @@
 
             try {
                 const res = await fetch('/api/tracks', { method: 'POST', body: fd });
-                const data = await res.json();
+                let data;
+                try {
+                    data = await res.json();
+                } catch (jsonErr) {
+                    const txt = await res.text().catch(() => '');
+                    data = { detail: txt || `HTTP ${res.status} ${res.statusText}` };
+                }
+
                 if (res.ok && data.success) {
                     alert('✓ Song uploaded successfully!');
                     window.location.reload();
                 } else {
-                    alert('Upload error: ' + (data.detail || 'Failed'));
+                    alert('Upload error: ' + (data.detail || 'Upload failed'));
                     btn.textContent = 'Upload & Process Track';
                     btn.disabled = false;
                 }
             } catch (e) {
-                alert('Network error uploading song');
+                alert('Upload error: ' + (e.message || 'Network error'));
                 btn.textContent = 'Upload & Process Track';
                 btn.disabled = false;
             }
         }
+
 
         function openEditModal(id, title, artist, featured, genre, album, bitrate, cover, lyrics) {
             document.getElementById('edit-track-id').value = id;

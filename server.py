@@ -23,19 +23,26 @@ import database as db
 import metadata_extractor
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-MEDIA_DIR = os.path.join(BASE_DIR, "media", "tracks")
-COVERS_DIR = os.path.join(BASE_DIR, "media", "covers")
-TEAM_DIR = os.path.join(BASE_DIR, "media", "team")
-TEMP_DIR = os.path.join(BASE_DIR, "media", "temp")
 
-try:
-    os.makedirs(MEDIA_DIR, exist_ok=True)
-    os.makedirs(COVERS_DIR, exist_ok=True)
-    os.makedirs(TEAM_DIR, exist_ok=True)
-    os.makedirs(TEMP_DIR, exist_ok=True)
-except Exception:
-    pass
+def get_writable_dir(sub_path: str) -> str:
+    """Returns a writable directory path. On Vercel/serverless environments, falls back to /tmp."""
+    target = os.path.join(BASE_DIR, sub_path)
+    try:
+        os.makedirs(target, exist_ok=True)
+        test_file = os.path.join(target, ".write_test")
+        with open(test_file, "w") as f:
+            f.write("ok")
+        os.remove(test_file)
+        return target
+    except Exception:
+        tmp_target = os.path.join("/tmp", sub_path)
+        os.makedirs(tmp_target, exist_ok=True)
+        return tmp_target
 
+MEDIA_DIR = get_writable_dir(os.path.join("media", "tracks"))
+COVERS_DIR = get_writable_dir(os.path.join("media", "covers"))
+TEAM_DIR = get_writable_dir(os.path.join("media", "team"))
+TEMP_DIR = get_writable_dir(os.path.join("media", "temp"))
 
 SESSION_STORE: Dict[str, str] = {}
 
@@ -59,9 +66,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/media/tracks", StaticFiles(directory=MEDIA_DIR), name="media_tracks")
-app.mount("/media/covers", StaticFiles(directory=COVERS_DIR), name="media_covers")
-app.mount("/media/team", StaticFiles(directory=TEAM_DIR), name="media_team")
+@app.get("/media/{subfolder}/{filename}")
+async def serve_media_file(subfolder: str, filename: str):
+    if subfolder not in {"tracks", "covers", "team", "temp"}:
+        raise HTTPException(status_code=404, detail="Invalid media folder")
+    
+    # Check BASE_DIR first
+    path_base = os.path.join(BASE_DIR, "media", subfolder, filename)
+    if os.path.exists(path_base):
+        mime, _ = mimetypes.guess_type(path_base)
+        return FileResponse(path_base, media_type=mime or "application/octet-stream")
+    
+    # Check /tmp second
+    path_tmp = os.path.join("/tmp", "media", subfolder, filename)
+    if os.path.exists(path_tmp):
+        mime, _ = mimetypes.guess_type(path_tmp)
+        return FileResponse(path_tmp, media_type=mime or "application/octet-stream")
+
+    raise HTTPException(status_code=404, detail="Media file not found")
+
 
 if os.path.exists(os.path.join(BASE_DIR, "css")):
     app.mount("/css", StaticFiles(directory=os.path.join(BASE_DIR, "css")), name="css")

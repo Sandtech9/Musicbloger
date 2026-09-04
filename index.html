@@ -425,8 +425,9 @@
 
                 <!-- Genre Filter Tabs -->
                 <div class="zp-filter-bar">
-                    <a href="/?sort=latest" class="zp-filter-chip active">ALL</a><a href="/?genre=afrobeats&sort=latest" class="zp-filter-chip ">Afrobeats</a><a href="/?genre=dancehall&sort=latest" class="zp-filter-chip ">Dancehall</a><a href="/?genre=gospel&sort=latest" class="zp-filter-chip ">Gospel</a><a href="/?genre=kalindula&sort=latest" class="zp-filter-chip ">Kalindula</a><a href="/?genre=others&sort=latest" class="zp-filter-chip ">Others</a><a href="/?genre=pop&sort=latest" class="zp-filter-chip ">Pop</a><a href="/?genre=rnb&sort=latest" class="zp-filter-chip ">RnB</a><a href="/?genre=zed-hip-hop&sort=latest" class="zp-filter-chip ">Zed Hip Hop</a>
+                    <a href="/?sort=latest" class="zp-filter-chip active" onclick="filterByGenre('all', event)">ALL</a><a href="/?genre=afrobeats&sort=latest" class="zp-filter-chip" onclick="filterByGenre('afrobeats', event)">Afrobeats</a><a href="/?genre=dancehall&sort=latest" class="zp-filter-chip" onclick="filterByGenre('dancehall', event)">Dancehall</a><a href="/?genre=gospel&sort=latest" class="zp-filter-chip" onclick="filterByGenre('gospel', event)">Gospel</a><a href="/?genre=kalindula&sort=latest" class="zp-filter-chip" onclick="filterByGenre('kalindula', event)">Kalindula</a><a href="/?genre=others&sort=latest" class="zp-filter-chip" onclick="filterByGenre('others', event)">Others</a><a href="/?genre=pop&sort=latest" class="zp-filter-chip" onclick="filterByGenre('pop', event)">Pop</a><a href="/?genre=rnb&sort=latest" class="zp-filter-chip" onclick="filterByGenre('rnb', event)">RnB</a><a href="/?genre=zed-hip-hop&sort=latest" class="zp-filter-chip" onclick="filterByGenre('zed-hip-hop', event)">Zed Hip Hop</a>
                 </div>
+
 
                 <!-- Post Cards List -->
                 <div class="zp-posts-list">
@@ -702,6 +703,27 @@
     let globalAudio = new Audio();
     let currentPlayingId = null;
 
+    globalAudio.onended = function() {
+        document.getElementById('zp-dock-play-icon').className = 'fas fa-play';
+        updatePlayIcons(currentPlayingId, false);
+        currentPlayingId = null;
+    };
+
+    function updatePlayIcons(id, isPlaying) {
+        document.querySelectorAll('.zp-btn-play-trigger, .zp-hero-play-btn').forEach(btn => {
+            const attr = btn.getAttribute('onclick') || '';
+            if (attr.includes(`playTrack(${id},`)) {
+                const icon = btn.querySelector('i');
+                if (icon) icon.className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
+            } else {
+                const icon = btn.querySelector('i');
+                if (icon && icon.className.includes('fa-pause')) {
+                    icon.className = 'fas fa-play';
+                }
+            }
+        });
+    }
+
     function playTrack(id, title, artist, coverUrl, streamUrl) {
         const dock = document.getElementById('zp-dock-player');
         if (!dock) return;
@@ -709,19 +731,27 @@
         if (currentPlayingId === id && !globalAudio.paused) {
             globalAudio.pause();
             document.getElementById('zp-dock-play-icon').className = 'fas fa-play';
+            updatePlayIcons(id, false);
             return;
         }
 
         currentPlayingId = id;
         globalAudio.src = streamUrl;
+        dock.style.display = 'flex';
+        document.getElementById('zp-dock-thumb').src = coverUrl;
+        document.getElementById('zp-dock-title').textContent = title;
+        document.getElementById('zp-dock-artist').textContent = artist;
+        document.getElementById('zp-dock-play-icon').className = 'fas fa-spinner fa-spin';
+
         globalAudio.play().then(() => {
-            dock.style.display = 'flex';
-            document.getElementById('zp-dock-thumb').src = coverUrl;
-            document.getElementById('zp-dock-title').textContent = title;
-            document.getElementById('zp-dock-artist').textContent = artist;
             document.getElementById('zp-dock-play-icon').className = 'fas fa-pause';
+            updatePlayIcons(id, true);
             fetch('/api/tracks/' + id + '/play', { method: 'POST' }).catch(() => {});
-        }).catch(err => console.error("Playback error:", err));
+        }).catch(err => {
+            console.error("Playback error:", err);
+            document.getElementById('zp-dock-play-icon').className = 'fas fa-play';
+            updatePlayIcons(id, false);
+        });
     }
 
     function toggleDockPlay() {
@@ -729,9 +759,11 @@
         if (globalAudio.paused) {
             globalAudio.play();
             document.getElementById('zp-dock-play-icon').className = 'fas fa-pause';
+            if (currentPlayingId) updatePlayIcons(currentPlayingId, true);
         } else {
             globalAudio.pause();
             document.getElementById('zp-dock-play-icon').className = 'fas fa-play';
+            if (currentPlayingId) updatePlayIcons(currentPlayingId, false);
         }
     }
 
@@ -739,35 +771,102 @@
         globalAudio.pause();
         const dock = document.getElementById('zp-dock-player');
         if (dock) dock.style.display = 'none';
+        if (currentPlayingId) updatePlayIcons(currentPlayingId, false);
         currentPlayingId = null;
     }
 
-    // Real-Time Debounced Multi-Field Search Engine
+    // Genre Filtering Engine
+    function filterByGenre(genreSlug, event) {
+        if (event) event.preventDefault();
+        const g = (genreSlug || 'all').toLowerCase().trim();
+        
+        document.querySelectorAll('.zp-filter-chip').forEach(chip => {
+            chip.classList.remove('active');
+            const href = (chip.getAttribute('href') || '').toLowerCase();
+            const text = chip.textContent.toLowerCase().trim();
+            if ((g === 'all' && (text === 'all' || href.includes('sort=latest') && !href.includes('genre='))) || 
+                (g !== 'all' && (href.includes('genre=' + g) || text === g.replace(/-/g, ' ')))) {
+                chip.classList.add('active');
+            }
+        });
+
+        const items = document.querySelectorAll('.zp-post-item');
+        let visibleCount = 0;
+        items.forEach(item => {
+            const catBadge = item.querySelector('.zp-post-cat-badge');
+            const catText = (catBadge ? catBadge.textContent : '').toLowerCase().trim();
+            const catSlug = catText.replace(/\s+/g, '-');
+
+            if (g === 'all' || catText === g || catSlug === g || catText.includes(g)) {
+                item.style.display = 'flex';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        let emptyState = document.getElementById('zp-filter-empty-state');
+        if (visibleCount === 0 && items.length > 0) {
+            if (!emptyState) {
+                const list = document.querySelector('.zp-posts-list');
+                if (list) {
+                    emptyState = document.createElement('div');
+                    emptyState.id = 'zp-filter-empty-state';
+                    emptyState.className = 'zp-empty-state';
+                    emptyState.style.cssText = 'text-align:center; padding:3rem 1.5rem; background:var(--zp-bg-card); border:1px solid var(--zp-border); border-radius:var(--zp-radius-md);';
+                    emptyState.innerHTML = `
+                        <i class="fas fa-music" style="font-size:2.5rem; color:var(--zp-text-muted); margin-bottom:1rem; opacity:0.6;"></i>
+                        <h3 style="font-size:1.1rem; font-weight:800; color:var(--zp-heading); margin-bottom:0.5rem;">No songs found in this category</h3>
+                        <p style="font-size:0.85rem; color:var(--zp-text-muted); margin-bottom:1.2rem;">Try selecting a different genre or view all songs.</p>
+                        <button type="button" onclick="filterByGenre('all', event)" class="zp-btn-play-trigger" style="margin:0 auto; display:inline-flex; cursor:pointer;">
+                            <i class="fas fa-undo"></i> Show All Songs
+                        </button>
+                    `;
+                    list.appendChild(emptyState);
+                }
+            } else {
+                emptyState.style.display = 'block';
+            }
+        } else if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+
+        try {
+            const newUrl = g === 'all' ? window.location.pathname : `${window.location.pathname}?genre=${g}`;
+            window.history.pushState({}, '', newUrl);
+        } catch (e) {}
+    }
+
+    // Real-Time Search Engine with API + DOM Fallback
     let searchDebounceTimer = null;
     let originalPostsHtml = '';
 
     function initSearchState() {
         const list = document.querySelector('.zp-posts-list');
-        if (list) {
-            originalPostsHtml = list.innerHTML;
+        if (list) originalPostsHtml = list.innerHTML;
+
+        // Parse query string parameters on load
+        const params = new URLSearchParams(window.location.search);
+        const genre = params.get('genre');
+        const search = params.get('search');
+        if (genre) {
+            filterByGenre(genre);
+        } else if (search) {
+            document.querySelectorAll('.zp-search-input, .zp-nav-search-input').forEach(inp => inp.value = search);
+            handleRealtimeSearch(search);
         }
     }
     document.addEventListener('DOMContentLoaded', initSearchState);
 
     function handleRealtimeSearch(query) {
         const q = (query || '').trim();
-        const clearBtns = document.querySelectorAll('.zp-search-clear');
-        clearBtns.forEach(btn => btn.style.display = q.length > 0 ? 'inline-flex' : 'none');
-
-        // Synchronize all search inputs on screen
+        document.querySelectorAll('.zp-search-clear').forEach(btn => btn.style.display = q.length > 0 ? 'inline-flex' : 'none');
         document.querySelectorAll('.zp-search-input, .zp-nav-search-input').forEach(inp => {
             if (inp.value !== query) inp.value = query;
         });
 
         clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(() => {
-            executeSearch(q);
-        }, 300);
+        searchDebounceTimer = setTimeout(() => { executeSearch(q); }, 250);
     }
 
     function clearRealtimeSearch() {
@@ -782,12 +881,11 @@
 
         const q = (query || '').toLowerCase().trim();
         if (!q) {
-            if (originalPostsHtml) {
-                list.innerHTML = originalPostsHtml;
-            }
+            if (originalPostsHtml) list.innerHTML = originalPostsHtml;
             return;
         }
 
+        // Try API Search First
         try {
             const res = await fetch('/api/tracks?search=' + encodeURIComponent(q));
             if (res.ok) {
@@ -823,7 +921,7 @@
                                     <a href="/track/${t.id}">${displayArtist} – ${displayTitle}</a>
                                 </h3>
                                 <div class="zp-post-actions">
-                                    <button class="zp-btn-play-trigger" onclick="playTrack(${t.id}, '${t.title.replace(/'/g, "\'")}', '${artistFull.replace(/'/g, "\'")}', '${tArt}', '${t.stream_url}')">
+                                    <button class="zp-btn-play-trigger" onclick="playTrack(${t.id}, '${t.title.replace(/'/g, "\\'")}', '${artistFull.replace(/'/g, "\\'")}', '${tArt}', '${t.stream_url}')">
                                         <i class="fas fa-play"></i> Play
                                     </button>
                                     <a href="/api/tracks/${t.id}/download" class="zp-btn-dl-direct" title="Download MP3"><i class="fas fa-arrow-down"></i></a>
@@ -834,24 +932,52 @@
                         `;
                     });
                     list.innerHTML = html;
-                } else {
-                    list.innerHTML = `
-                    <div class="zp-empty-state" style="text-align:center; padding:3.5rem 1.5rem; background:var(--zp-bg-card); border:1px solid var(--zp-border); border-radius:var(--zp-radius-md);">
-                        <i class="fas fa-search" style="font-size:2.8rem; color:var(--zp-text-muted); margin-bottom:1rem; opacity:0.6;"></i>
-                        <h3 style="font-size:1.15rem; font-weight:800; color:var(--zp-heading); margin-bottom:0.5rem;">No tracks found matching "${query}"</h3>
-                        <p style="font-size:0.85rem; color:var(--zp-text-muted); margin-bottom:1.4rem;">Try searching by artist name, song title, genre, or featured collaborator.</p>
-                        <button type="button" onclick="clearRealtimeSearch()" class="zp-btn-play-trigger" style="margin:0 auto; display:inline-flex; cursor:pointer;">
-                            <i class="fas fa-undo"></i> Reset Search
-                        </button>
-                    </div>
-                    `;
+                    return;
                 }
             }
-        } catch (e) {
-            console.error("Search error:", e);
+        } catch (e) {}
+
+        // Immediate Client-Side DOM Filter Fallback
+        const items = list.querySelectorAll('.zp-post-item');
+        let visibleCount = 0;
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            const title = (item.getAttribute('data-title') || '').toLowerCase();
+            const artist = (item.getAttribute('data-artist') || '').toLowerCase();
+
+            if (text.includes(q) || title.includes(q) || artist.includes(q)) {
+                item.style.display = 'flex';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        let emptyState = document.getElementById('zp-search-empty-state');
+        if (visibleCount === 0 && items.length > 0) {
+            if (!emptyState) {
+                emptyState = document.createElement('div');
+                emptyState.id = 'zp-search-empty-state';
+                emptyState.className = 'zp-empty-state';
+                emptyState.style.cssText = 'text-align:center; padding:3.5rem 1.5rem; background:var(--zp-bg-card); border:1px solid var(--zp-border); border-radius:var(--zp-radius-md);';
+                emptyState.innerHTML = `
+                    <i class="fas fa-search" style="font-size:2.8rem; color:var(--zp-text-muted); margin-bottom:1rem; opacity:0.6;"></i>
+                    <h3 style="font-size:1.15rem; font-weight:800; color:var(--zp-heading); margin-bottom:0.5rem;">No tracks found matching "${query}"</h3>
+                    <p style="font-size:0.85rem; color:var(--zp-text-muted); margin-bottom:1.4rem;">Try searching by artist name, song title, genre, or featured collaborator.</p>
+                    <button type="button" onclick="clearRealtimeSearch()" class="zp-btn-play-trigger" style="margin:0 auto; display:inline-flex; cursor:pointer;">
+                        <i class="fas fa-undo"></i> Reset Search
+                    </button>
+                `;
+                list.appendChild(emptyState);
+            } else {
+                emptyState.style.display = 'block';
+            }
+        } else if (emptyState) {
+            emptyState.style.display = 'none';
         }
     }
 </script>
+
 
 <div id="zp-dock-player" class="zp-dock-player">
     <div class="zp-dock-info">

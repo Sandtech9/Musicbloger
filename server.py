@@ -570,8 +570,16 @@ async def download_track_file(track_id: int):
         raise HTTPException(status_code=404, detail="Track not found")
 
     storage_path = track["storage_path"]
+    if not os.path.isabs(storage_path):
+        storage_path = os.path.join(BASE_DIR, storage_path)
+
     if not os.path.exists(storage_path):
-        raise HTTPException(status_code=404, detail="Physical audio file missing on server")
+        file_basename = os.path.basename(storage_path)
+        alt_path = os.path.join(MEDIA_DIR, file_basename)
+        if os.path.exists(alt_path):
+            storage_path = alt_path
+        else:
+            raise HTTPException(status_code=404, detail="Physical audio file missing on server")
 
     db.increment_downloads(track_id)
 
@@ -582,6 +590,7 @@ async def download_track_file(track_id: int):
         filename=download_name,
         headers={"Content-Disposition": f'attachment; filename="{download_name}"'}
     )
+
 
 @app.get("/api/artists/{artist_id}/download-zip")
 @app.get("/api/artists/{artist_id}/zip")

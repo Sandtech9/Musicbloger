@@ -1,57 +1,23 @@
 {
   "version": 2,
-  "rewrites": [
+  "builds": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/index.py"
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/media/(.*)",
+      "dest": "/media/$1"
     },
     {
-      "source": "/track/(.*)",
-      "destination": "/api/index.py"
+      "src": "/css/(.*)",
+      "dest": "/css/$1"
     },
     {
-      "source": "/artist/(.*)",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/video/(.*)",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/embed/(.*)",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/music",
-      "destination": "/music.html"
-    },
-    {
-      "source": "/videos",
-      "destination": "/videos.html"
-    },
-    {
-      "source": "/albums",
-      "destination": "/albums.html"
-    },
-    {
-      "source": "/album",
-      "destination": "/albums.html"
-    },
-    {
-      "source": "/artists",
-      "destination": "/artists.html"
-    },
-    {
-      "source": "/about",
-      "destination": "/about.html"
-    },
-    {
-      "source": "/admin",
-      "destination": "/admin.html"
-    },
-    {
-      "source": "/admin/(.*)",
-      "destination": "/admin.html"
+      "src": "/(.*)",
+      "dest": "api/index.py"
     }
   ]
 }

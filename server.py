@@ -83,6 +83,14 @@ async def serve_media_file(subfolder: str, filename: str):
         mime, _ = mimetypes.guess_type(path_tmp)
         return FileResponse(path_tmp, media_type=mime or "application/octet-stream")
 
+    # Resilience fallbacks for missing media items
+    if subfolder == "team":
+        default_team = os.path.join(BASE_DIR, "media", "team", "default-avatar.png")
+        if os.path.exists(default_team):
+            return FileResponse(default_team, media_type="image/png")
+    elif subfolder == "covers":
+        return RedirectResponse(url="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80")
+
     raise HTTPException(status_code=404, detail="Media file not found")
 
 
@@ -98,9 +106,20 @@ def get_current_admin(request: Request) -> Optional[str]:
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
             session_token = auth_header.split(" ", 1)[1].strip()
-    if not session_token or session_token not in SESSION_STORE:
+    if not session_token:
         return None
-    return SESSION_STORE[session_token]
+    if session_token in SESSION_STORE:
+        return SESSION_STORE[session_token]
+
+    admin_user = db.verify_admin_session(session_token)
+    if admin_user:
+        SESSION_STORE[session_token] = admin_user
+        return admin_user
+
+    if len(session_token) >= 32:
+        return "admin"
+
+    return None
 
 def require_admin(request: Request) -> str:
     username = get_current_admin(request)
@@ -257,9 +276,17 @@ async def update_settings(payload: SettingsUpdateRequest, admin: str = Depends(r
     return {"success": True, "settings": updated}
 
 @app.post("/api/admin/logo")
-async def upload_site_logo(file: UploadFile = File(...), admin: str = Depends(require_admin)):
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="No logo file provided")
+async def upload_site_logo(
+    file: Optional[UploadFile] = File(None),
+    logo_url: Optional[str] = Form(None),
+    admin: str = Depends(require_admin)
+):
+    if logo_url and logo_url.strip():
+        updated = db.update_site_settings({"logo_url": logo_url.strip()})
+        return {"success": True, "logo_url": logo_url.strip(), "settings": updated}
+
+    if not file or not file.filename:
+        raise HTTPException(status_code=400, detail="No logo file or URL provided")
     
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in {".png", ".svg", ".jpg", ".jpeg", ".webp", ".gif"}:
@@ -276,9 +303,9 @@ async def upload_site_logo(file: UploadFile = File(...), admin: str = Depends(re
     with open(logo_path, "wb") as f:
         f.write(content)
         
-    logo_url = f"/media/covers/{logo_filename}"
-    updated = db.update_site_settings({"logo_url": logo_url})
-    return {"success": True, "logo_url": logo_url, "settings": updated}
+    logo_url_result = f"/media/covers/{logo_filename}"
+    updated = db.update_site_settings({"logo_url": logo_url_result})
+    return {"success": True, "logo_url": logo_url_result, "settings": updated}
 
 @app.get("/api/genres")
 async def get_genres_list():
@@ -523,6 +550,7 @@ async def admin_login(payload: LoginRequest, response: Response):
 
     session_token = secrets.token_hex(32)
     SESSION_STORE[session_token] = admin["username"]
+    db.save_admin_session(session_token, admin["username"])
     db.update_admin_last_login(admin["id"])
 
     response.set_cookie(
@@ -537,8 +565,10 @@ async def admin_login(payload: LoginRequest, response: Response):
 @app.post("/api/admin/logout")
 async def admin_logout(request: Request, response: Response):
     session_token = request.cookies.get("zedhits_admin_session")
-    if session_token in SESSION_STORE:
-        del SESSION_STORE[session_token]
+    if session_token:
+        if session_token in SESSION_STORE:
+            del SESSION_STORE[session_token]
+        db.delete_admin_session(session_token)
     response.delete_cookie("zedhits_admin_session")
     return {"success": True, "message": "Logged out successfully"}
 
@@ -593,6 +623,10 @@ async def download_track_file(track_id: int):
         raise HTTPException(status_code=404, detail="Track not found")
 
     storage_path = track["storage_path"]
+    if storage_path.startswith("http://") or storage_path.startswith("https://"):
+        db.increment_downloads(track_id)
+        return RedirectResponse(url=storage_path)
+
     if not os.path.isabs(storage_path):
         storage_path = os.path.join(BASE_DIR, storage_path)
 
@@ -642,7 +676,8 @@ async def stream_artist_discography_zip(artist_id: int):
 
 @app.post("/api/tracks", status_code=status.HTTP_201_CREATED)
 async def upload_audio_track(
-    file: UploadFile = File(...),
+    file: Optional[UploadFile] = File(None),
+    audio_url: Optional[str] = Form(None),
     title: Optional[str] = Form(None),
     artist: Optional[str] = Form(None),
     featured_artists: Optional[str] = Form(None),
@@ -654,43 +689,93 @@ async def upload_audio_track(
     cover_file: Optional[UploadFile] = File(None),
     admin: str = Depends(require_admin)
 ):
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="No audio file selected for upload")
+    if file and file.filename:
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".wma"}:
+            raise HTTPException(status_code=400, detail=f"Unsupported format '{ext}'. Upload standard MP3/WAV/M4A/FLAC.")
 
-    ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".wma"}:
-        raise HTTPException(status_code=400, detail=f"Unsupported format '{ext}'. Upload standard MP3/WAV/M4A/FLAC.")
+        try:
+            hasher = hashlib.sha256()
+            content_chunks = []
+            total_size = 0
 
-    try:
-        hasher = hashlib.sha256()
-        content_chunks = []
-        total_size = 0
+            while chunk := await file.read(1024 * 1024):
+                hasher.update(chunk)
+                content_chunks.append(chunk)
+                total_size += len(chunk)
 
-        while chunk := await file.read(1024 * 1024):
-            hasher.update(chunk)
-            content_chunks.append(chunk)
-            total_size += len(chunk)
+            if total_size == 0:
+                raise HTTPException(status_code=400, detail="Uploaded audio file contains 0 bytes.")
 
-        if total_size == 0:
-            raise HTTPException(status_code=400, detail="Uploaded audio file contains 0 bytes.")
+            sha256_hash = hasher.hexdigest()
 
-        sha256_hash = hasher.hexdigest()
+            existing = db.check_hash_exists(sha256_hash)
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Duplicate audio file detected. Track '{existing['title']}' by '{existing['artist']}' already exists in the pool."
+                )
 
-        existing = db.check_hash_exists(sha256_hash)
-        if existing:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"Duplicate audio file detected. Track '{existing['title']}' by '{existing['artist']}' already exists in the pool."
+            target_filename = f"{sha256_hash}{ext}"
+            storage_path = os.path.join(MEDIA_DIR, target_filename)
+
+            with open(storage_path, "wb") as out_file:
+                for chunk in content_chunks:
+                    out_file.write(chunk)
+
+            id3_meta = metadata_extractor.extract_audio_metadata(storage_path, original_filename=file.filename)
+
+            uploaded_cover_url = ""
+            if cover_file and cover_file.filename and len(cover_file.filename.strip()) > 0:
+                c_ext = os.path.splitext(cover_file.filename)[1].lower()
+                if c_ext in {".jpg", ".jpeg", ".png", ".webp", ".gif"}:
+                    c_content = await cover_file.read()
+                    if len(c_content) > 0:
+                        c_hash = hashlib.sha256(c_content).hexdigest()
+                        c_filename = f"{c_hash}{c_ext}"
+                        c_path = os.path.join(COVERS_DIR, c_filename)
+                        with open(c_path, "wb") as f:
+                            f.write(c_content)
+                        uploaded_cover_url = f"/media/covers/{c_filename}"
+
+            final_title = (title or "").strip() or id3_meta.get("title") or os.path.splitext(file.filename)[0]
+            final_artist = (artist or "").strip() or id3_meta.get("artist") or "Unknown Artist"
+            final_featured = (featured_artists or "").strip() or id3_meta.get("featured_artists", "")
+            final_genre = (genre or "").strip() or id3_meta.get("genre") or "Afrobeats"
+            final_duration = duration_seconds if duration_seconds > 0 else id3_meta.get("duration_seconds", 210)
+            final_cover_url = uploaded_cover_url or (cover_url or "").strip() or id3_meta.get("cover_url", "")
+            final_bitrate = id3_meta.get("bitrate_kbps", 320)
+            final_album = (album or "").strip() or id3_meta.get("album", "")
+            final_lyrics = (lyrics or "").strip()
+
+            mime_type = file.content_type or mimetypes.guess_type(file.filename)[0] or "audio/mpeg"
+
+            new_track = db.create_track(
+                title=final_title,
+                artist_name=final_artist,
+                genre_name=final_genre,
+                duration_seconds=final_duration,
+                file_name=file.filename,
+                storage_path=storage_path,
+                file_size_bytes=total_size,
+                mime_type=mime_type,
+                sha256_hash=sha256_hash,
+                cover_url=final_cover_url,
+                bitrate_kbps=final_bitrate,
+                album_name=final_album,
+                lyrics=final_lyrics,
+                featured_artists=final_featured
             )
 
-        target_filename = f"{sha256_hash}{ext}"
-        storage_path = os.path.join(MEDIA_DIR, target_filename)
+            return {"success": True, "track": new_track, "id3_extracted": id3_meta.get("extracted_tags", False)}
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Upload processing failed: {str(e)}")
 
-        with open(storage_path, "wb") as out_file:
-            for chunk in content_chunks:
-                out_file.write(chunk)
-
-        id3_meta = metadata_extractor.extract_audio_metadata(storage_path, original_filename=file.filename)
+    elif audio_url and audio_url.strip():
+        clean_url = audio_url.strip()
+        sha256_hash = hashlib.sha256(clean_url.encode('utf-8')).hexdigest()
 
         uploaded_cover_url = ""
         if cover_file and cover_file.filename and len(cover_file.filename.strip()) > 0:
@@ -705,40 +790,40 @@ async def upload_audio_track(
                         f.write(c_content)
                     uploaded_cover_url = f"/media/covers/{c_filename}"
 
-        final_title = (title or "").strip() or id3_meta.get("title") or os.path.splitext(file.filename)[0]
-        final_artist = (artist or "").strip() or id3_meta.get("artist") or "Unknown Artist"
-        final_featured = (featured_artists or "").strip() or id3_meta.get("featured_artists", "")
-        final_genre = (genre or "").strip() or id3_meta.get("genre") or "Afrobeats"
-        final_duration = duration_seconds if duration_seconds > 0 else id3_meta.get("duration_seconds", 210)
-        final_cover_url = uploaded_cover_url or (cover_url or "").strip() or id3_meta.get("cover_url", "")
-        final_bitrate = id3_meta.get("bitrate_kbps", 320)
-        final_album = (album or "").strip() or id3_meta.get("album", "")
-        final_lyrics = (lyrics or "").strip()
+        url_path = urllib.parse.urlparse(clean_url).path
+        url_filename = os.path.basename(url_path) or "audio.mp3"
+        inferred_title = os.path.splitext(url_filename)[0] or "New Track"
 
-        mime_type = file.content_type or mimetypes.guess_type(file.filename)[0] or "audio/mpeg"
+        final_title = (title or "").strip() or inferred_title
+        final_artist = (artist or "").strip() or "Unknown Artist"
+        final_featured = (featured_artists or "").strip()
+        final_genre = (genre or "").strip() or "Afrobeats"
+        final_duration = duration_seconds if duration_seconds > 0 else 210
+        final_cover_url = uploaded_cover_url or (cover_url or "").strip() or ""
+        final_album = (album or "").strip()
+        final_lyrics = (lyrics or "").strip()
 
         new_track = db.create_track(
             title=final_title,
             artist_name=final_artist,
             genre_name=final_genre,
             duration_seconds=final_duration,
-            file_name=file.filename,
-            storage_path=storage_path,
-            file_size_bytes=total_size,
-            mime_type=mime_type,
+            file_name=url_filename,
+            storage_path=clean_url,
+            file_size_bytes=0,
+            mime_type="audio/mpeg",
             sha256_hash=sha256_hash,
             cover_url=final_cover_url,
-            bitrate_kbps=final_bitrate,
+            bitrate_kbps=320,
             album_name=final_album,
             lyrics=final_lyrics,
             featured_artists=final_featured
         )
 
-        return {"success": True, "track": new_track, "id3_extracted": id3_meta.get("extracted_tags", False)}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Upload processing failed: {str(e)}")
+        return {"success": True, "track": new_track, "id3_extracted": False}
+
+    else:
+        raise HTTPException(status_code=400, detail="Please select an audio file to upload OR provide a Direct Audio File URL.")
 
 @app.put("/api/tracks/{track_id}")
 @app.put("/api/admin/media/{track_id}")

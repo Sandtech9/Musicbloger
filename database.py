@@ -192,6 +192,15 @@ def init_db():
                 """, v)
             conn.commit()
 
+        # Ensure admin_sessions table exists for serverless persistence
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS admin_sessions (
+                token TEXT PRIMARY KEY,
+                username TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         # Seed default admin if none exists
         cursor.execute("SELECT COUNT(*) as count FROM admins")
         if cursor.fetchone()["count"] == 0:
@@ -215,6 +224,38 @@ def get_admin_by_username(username: str) -> Optional[dict]:
             "SELECT * FROM admins WHERE username = ? COLLATE NOCASE", (username,)
         ).fetchone()
         return dict(row) if row else None
+    finally:
+        conn.close()
+
+def save_admin_session(token: str, username: str):
+    conn = get_connection()
+    try:
+        with conn:
+            conn.execute("INSERT OR REPLACE INTO admin_sessions (token, username) VALUES (?, ?)", (token, username))
+    except Exception:
+        pass
+    finally:
+        conn.close()
+
+def verify_admin_session(token: str) -> Optional[str]:
+    if not token or len(token) < 16:
+        return None
+    conn = get_connection()
+    try:
+        row = conn.execute("SELECT username FROM admin_sessions WHERE token = ?", (token,)).fetchone()
+        return row["username"] if row else None
+    except Exception:
+        return None
+    finally:
+        conn.close()
+
+def delete_admin_session(token: str):
+    conn = get_connection()
+    try:
+        with conn:
+            conn.execute("DELETE FROM admin_sessions WHERE token = ?", (token,))
+    except Exception:
+        pass
     finally:
         conn.close()
 

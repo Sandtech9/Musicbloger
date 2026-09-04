@@ -666,8 +666,13 @@
                     <div class="card-title"><i class="fas fa-cloud-upload-alt"></i> Upload New Zambian Music Track</div>
                     <form id="upload-form" onsubmit="handleTrackUpload(event)">
                         <div class="form-group">
-                            <label>Audio File (MP3, WAV, M4A, FLAC) *</label>
-                            <input type="file" id="up-file" class="form-input" accept="audio/*" required>
+                            <label>Audio File (MP3, WAV, M4A, FLAC)</label>
+                            <input type="file" id="up-file" class="form-input" accept="audio/*">
+                            <span style="font-size:0.75rem; color:#94a3b8; margin-top:2px; display:block;">Select local file (Max 4.5MB for Vercel serverless direct upload).</span>
+                        </div>
+                        <div class="form-group">
+                            <label>OR Direct Audio File URL (Required if no local file selected or file > 4.5MB)</label>
+                            <input type="url" id="up-audio-url" class="form-input" placeholder="https://example.com/music/song.mp3">
                         </div>
                         <div class="form-group">
                             <label>Song Title</label>
@@ -1501,11 +1506,35 @@
         async function handleTrackUpload(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-up-submit');
-            btn.textContent = 'Processing & Extracting ID3...';
+            const fileInput = document.getElementById('up-file');
+            const audioUrlInput = document.getElementById('up-audio-url');
+            
+            const file = fileInput.files && fileInput.files[0];
+            const audioUrl = audioUrlInput ? audioUrlInput.value.trim() : '';
+
+            if (!file && !audioUrl) {
+                alert('Please select an audio file to upload OR enter a Direct Audio File URL.');
+                return;
+            }
+
+            const MAX_VERCEL_BYTES = 4.5 * 1024 * 1024;
+            if (file && file.size > MAX_VERCEL_BYTES && !audioUrl) {
+                if (!confirm(`Notice: Selected audio file is ${(file.size / (1024 * 1024)).toFixed(1)} MB. Vercel serverless functions have a 4.5 MB body limit for direct uploads.\n\nIf the serverless upload fails, please enter a Direct Audio File URL in the field provided.\n\nDo you want to proceed with uploading anyway?`)) {
+                    if (audioUrlInput) audioUrlInput.focus();
+                    return;
+                }
+            }
+
+            btn.textContent = file ? 'Processing & Extracting ID3...' : 'Saving Track Record...';
             btn.disabled = true;
 
             const fd = new FormData();
-            fd.append('file', document.getElementById('up-file').files[0]);
+            if (file) {
+                fd.append('file', file);
+            }
+            if (audioUrl) {
+                fd.append('audio_url', audioUrl);
+            }
             fd.append('title', document.getElementById('up-title').value);
             fd.append('artist', document.getElementById('up-artist').value);
             fd.append('featured_artists', document.getElementById('up-featured-artists').value);
@@ -1513,12 +1542,18 @@
             fd.append('cover_url', document.getElementById('up-cover-url').value);
 
             const coverFiles = document.getElementById('up-cover-file').files;
-            if (coverFiles.length > 0) {
+            if (coverFiles && coverFiles.length > 0) {
                 fd.append('cover_file', coverFiles[0]);
             }
 
             try {
-                const res = await fetch('/api/tracks', { method: 'POST', body: fd });
+                const sessionToken = localStorage.getItem('zedhits_admin_token');
+                const headers = {};
+                if (sessionToken) {
+                    headers['Authorization'] = 'Bearer ' + sessionToken;
+                }
+
+                const res = await fetch('/api/tracks', { method: 'POST', body: fd, headers: headers, credentials: 'include' });
                 let data;
                 try {
                     data = await res.json();

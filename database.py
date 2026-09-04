@@ -781,6 +781,25 @@ def check_hash_exists(sha256_hash: str) -> Optional[dict]:
     finally:
         conn.close()
 
+def get_track_by_filename(filename: str) -> Optional[dict]:
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            """
+            SELECT t.id, t.title, mf.storage_path, mf.file_name 
+            FROM media_files mf
+            JOIN tracks t ON mf.track_id = t.id
+            WHERE mf.storage_path LIKE ? OR mf.file_name = ?
+            LIMIT 1
+            """,
+            (f"%{filename}", filename)
+        ).fetchone()
+        return dict(row) if row else None
+    except Exception:
+        return None
+    finally:
+        conn.close()
+
 def create_track(
     title: str,
     artist_name: str,

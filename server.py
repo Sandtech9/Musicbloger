@@ -90,6 +90,11 @@ async def serve_media_file(subfolder: str, filename: str):
             return FileResponse(default_team, media_type="image/png")
     elif subfolder == "covers":
         return RedirectResponse(url="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80")
+    elif subfolder == "tracks":
+        track = db.get_track_by_filename(filename)
+        if track and track.get("storage_path") and (track["storage_path"].startswith("http://") or track["storage_path"].startswith("https://")):
+            return RedirectResponse(url=track["storage_path"])
+        return RedirectResponse(url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3")
 
     raise HTTPException(status_code=404, detail="Media file not found")
 

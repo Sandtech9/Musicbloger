@@ -1379,6 +1379,15 @@
             setTimeout(() => { toast.style.display = 'none'; }, 3000);
         }
 
+        function getAdminHeaders(extraHeaders = {}) {
+            const token = localStorage.getItem('zedhits_admin_token');
+            const headers = { ...extraHeaders };
+            if (token) {
+                headers['Authorization'] = 'Bearer ' + token;
+            }
+            return headers;
+        }
+
         async function saveSettingsPayload(payload) {
             let currentSettings = JSON.parse(localStorage.getItem('zedhits_cms_settings') || '{}');
             Object.assign(currentSettings, payload);
@@ -1387,7 +1396,8 @@
             try {
                 const res = await fetch('/api/admin/settings', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAdminHeaders({ 'Content-Type': 'application/json' }),
+                    credentials: 'include',
                     body: JSON.stringify(payload)
                 });
                 if (res.ok) {
@@ -1499,7 +1509,12 @@
             try {
                 const fd = new FormData();
                 fd.append('file', file);
-                await fetch('/api/admin/logo', { method: 'POST', body: fd });
+                await fetch('/api/admin/logo', {
+                    method: 'POST',
+                    body: fd,
+                    headers: getAdminHeaders(),
+                    credentials: 'include'
+                });
             } catch (err) {}
         }
 
@@ -1809,7 +1824,12 @@
             try {
                 const url = id ? ('/api/admin/team/' + id) : '/api/admin/team';
                 const method = id ? 'PUT' : 'POST';
-                const res = await fetch(url, { method: method, body: fd });
+                const res = await fetch(url, {
+                    method: method,
+                    body: fd,
+                    headers: getAdminHeaders(),
+                    credentials: 'include'
+                });
                 const d = await res.json();
                 if (res.ok && d.success) {
                     alert('✓ Team member profile saved successfully!');
@@ -1829,7 +1849,11 @@
         async function deleteTeamMember(id, name) {
             if (!confirm('Are you sure you want to delete team member "' + name + '"?')) return;
             try {
-                const res = await fetch('/api/admin/team/' + id, { method: 'DELETE' });
+                const res = await fetch('/api/admin/team/' + id, {
+                    method: 'DELETE',
+                    headers: getAdminHeaders(),
+                    credentials: 'include'
+                });
                 const d = await res.json();
                 if (res.ok && d.success) {
                     alert('✓ Team member removed successfully!');

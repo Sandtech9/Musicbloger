@@ -370,12 +370,13 @@ async def create_team_member_endpoint(
     social_links: str = Form("{}"),
     display_order: int = Form(0),
     photo: Optional[UploadFile] = File(None),
+    photo_url: Optional[str] = Form(None),
     admin: str = Depends(require_admin)
 ):
     if not name.strip() or not role.strip():
         raise HTTPException(status_code=400, detail="Name and Role are required")
     
-    photo_path = "/media/team/default-avatar.png"
+    photo_path = (photo_url or "").strip() or "/media/team/default-avatar.png"
     if photo and photo.filename:
         ext = os.path.splitext(photo.filename)[1].lower()
         if ext not in {".jpg", ".jpeg", ".png", ".webp"}:
@@ -411,13 +412,14 @@ async def update_team_member_endpoint(
     social_links: Optional[str] = Form(None),
     display_order: Optional[int] = Form(None),
     photo: Optional[UploadFile] = File(None),
+    photo_url: Optional[str] = Form(None),
     admin: str = Depends(require_admin)
 ):
     existing = db.get_team_member_by_id(member_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Team member not found")
 
-    new_photo_path = None
+    new_photo_path = (photo_url or "").strip() or None
     if photo and photo.filename:
         ext = os.path.splitext(photo.filename)[1].lower()
         if ext not in {".jpg", ".jpeg", ".png", ".webp"}:

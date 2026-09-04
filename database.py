@@ -419,6 +419,13 @@ def get_genres() -> List[dict]:
     finally:
         conn.close()
 
+def format_stream_url(storage_path: str) -> str:
+    if not storage_path:
+        return ""
+    if storage_path.startswith("http://") or storage_path.startswith("https://"):
+        return storage_path
+    return f"/media/tracks/{os.path.basename(storage_path)}"
+
 def get_artist_profile(artist_id: int) -> Optional[dict]:
     conn = get_connection()
     try:
@@ -460,7 +467,7 @@ def get_artist_profile(artist_id: int) -> Optional[dict]:
             d = dict(r)
             d["artist"] = artist["name"]
             d["artist_id"] = artist["id"]
-            d["stream_url"] = f"/media/tracks/{os.path.basename(d['storage_path'])}"
+            d["stream_url"] = format_stream_url(d.get("storage_path", ""))
             total_plays += d.get("plays_count", 0)
             total_downloads += d.get("downloads_count", 0)
             tracks.append(d)
@@ -660,7 +667,7 @@ def get_tracks(
         tracks = []
         for r in rows:
             d = dict(r)
-            d["stream_url"] = f"/media/tracks/{os.path.basename(d['storage_path'])}"
+            d["stream_url"] = format_stream_url(d.get("storage_path", ""))
             if not d.get("cover_url"):
                 d["cover_url"] = ""
             tracks.append(d)
@@ -705,7 +712,7 @@ def get_track_by_id(track_id: int) -> Optional[dict]:
         if not row:
             return None
         d = dict(row)
-        d["stream_url"] = f"/media/tracks/{os.path.basename(d['storage_path'])}"
+        d["stream_url"] = format_stream_url(d.get("storage_path", ""))
         if not d.get("cover_url"):
             d["cover_url"] = ""
         return d
@@ -751,7 +758,7 @@ def get_related_tracks(track_id: int, limit: int = 4) -> List[dict]:
         tracks = []
         for r in rows:
             d = dict(r)
-            d["stream_url"] = f"/media/tracks/{os.path.basename(d['storage_path'])}"
+            d["stream_url"] = format_stream_url(d.get("storage_path", ""))
             tracks.append(d)
         return tracks
     finally:

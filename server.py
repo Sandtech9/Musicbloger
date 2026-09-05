@@ -50,9 +50,13 @@ import urllib.parse
 
 def upload_to_vercel_blob(file_bytes: bytes, filename: str, content_type: str = "application/octet-stream") -> Optional[str]:
     """Uploads file bytes directly to Vercel Blob object storage via REST API."""
-    token = os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()
+    token = (
+        os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip() or
+        os.environ.get("VERCEL_BLOB_READ_WRITE_TOKEN", "").strip() or
+        os.environ.get("VERCEL_OIDC_TOKEN", "").strip()
+    )
     if not token:
-        print("[Vercel Blob] [NOTICE] BLOB_READ_WRITE_TOKEN is not set in environment variables.")
+        print("[Vercel Blob] [NOTICE] No Vercel Blob token found (BLOB_READ_WRITE_TOKEN / VERCEL_OIDC_TOKEN).")
         return None
     
     clean_filename = urllib.parse.quote(os.path.basename(filename))
@@ -892,12 +896,19 @@ async def upload_audio_track(
 # ----------------------------------------------------------------------------
 @app.get("/api/admin/blob/status")
 async def get_blob_status(admin: str = Depends(require_admin)):
-    token = os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()
+    token = (
+        os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip() or
+        os.environ.get("VERCEL_BLOB_READ_WRITE_TOKEN", "").strip() or
+        os.environ.get("VERCEL_OIDC_TOKEN", "").strip()
+    )
+    store_id = os.environ.get("BLOB_STORE_ID", "").strip()
     return {
         "configured": bool(token),
         "status": "active" if token else "unconfigured",
         "provider": "Vercel Blob Storage",
-        "read_write_token_present": bool(token)
+        "store_id": store_id or "musicbloger-blob",
+        "read_write_token_present": bool(token),
+        "store_id_present": bool(store_id)
     }
 
 @app.post("/api/admin/blob/upload")

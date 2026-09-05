@@ -1,22 +1,98 @@
-# ============================================================================
-# Zedhits Enterprise Relational Database Layer (SQLite 3NF Engine)
-# ============================================================================
 import os
 import sqlite3
 import hashlib
 import secrets
+import time
+import json
+import shutil
+import urllib.request
+import urllib.parse
 from typing import Optional, List, Dict, Any, Tuple
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 ORIGINAL_DB_FILE = os.path.join(BASE_DIR, "zedhits.db")
 SCHEMA_FILE = os.path.join(BASE_DIR, "schema.sql")
 
+BLOB_DB_FILENAME = "zedhits_cloud_db.db"
+_LAST_DB_DOWNLOAD_TIME = 0.0
+
+def get_vercel_blob_token() -> str:
+    return (
+        os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip() or
+        os.environ.get("VERCEL_BLOB_READ_WRITE_TOKEN", "").strip() or
+        os.environ.get("VERCEL_OIDC_TOKEN", "").strip()
+    )
+
+def download_db_from_vercel_blob(target_path: str, force: bool = False) -> bool:
+    global _LAST_DB_DOWNLOAD_TIME
+    token = get_vercel_blob_token()
+    if not token:
+        return False
+
+    now = time.time()
+    if not force and os.path.exists(target_path) and (now - _LAST_DB_DOWNLOAD_TIME < 10):
+        return True
+
+    try:
+        req = urllib.request.Request(
+            f"https://blob.vercel-storage.com/?prefix={BLOB_DB_FILENAME}",
+            headers={"Authorization": f"Bearer {token}", "x-api-version": "7"}
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status == 200:
+                data = json.loads(resp.read().decode("utf-8"))
+                blobs = data.get("blobs", [])
+                matching = [b for b in blobs if b.get("pathname") == BLOB_DB_FILENAME or BLOB_DB_FILENAME in b.get("url", "")]
+                if matching:
+                    matching.sort(key=lambda x: x.get("uploadedAt", ""), reverse=True)
+                    download_url = matching[0]["url"]
+                    dl_req = urllib.request.Request(download_url)
+                    with urllib.request.urlopen(dl_req, timeout=15) as dl_resp:
+                        if dl_resp.status == 200:
+                            content = dl_resp.read()
+                            if len(content) > 1000:
+                                with open(target_path, "wb") as f:
+                                    f.write(content)
+                                _LAST_DB_DOWNLOAD_TIME = time.time()
+                                print(f"[Cloud DB Sync] [OK] Downloaded latest DB snapshot from Vercel Blob ({len(content)} bytes)")
+                                return True
+    except Exception as e:
+        print(f"[Cloud DB Sync] [NOTICE] Blob snapshot check: {e}")
+    return False
+
+def sync_db_to_vercel_blob(db_path: str) -> bool:
+    token = get_vercel_blob_token()
+    if not token or not os.path.exists(db_path):
+        return False
+    try:
+        with open(db_path, "rb") as f:
+            file_bytes = f.read()
+
+        if len(file_bytes) < 1000:
+            return False
+
+        url = f"https://blob.vercel-storage.com/{BLOB_DB_FILENAME}?access=public"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "x-api-version": "7",
+            "x-content-type": "application/x-sqlite3",
+            "x-add-random-suffix": "0"
+        }
+        req = urllib.request.Request(url, data=file_bytes, headers=headers, method="PUT")
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            if resp.status in (200, 201):
+                print(f"[Cloud DB Sync] [OK] Successfully uploaded SQLite snapshot to Vercel Blob ({len(file_bytes)} bytes)")
+                return True
+    except Exception as e:
+        print(f"[Cloud DB Sync] [WARN] Upload DB to Vercel Blob failed: {e}")
+    return False
+
 def get_db_path() -> str:
     if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
         tmp_db = os.path.join("/tmp", "zedhits.db")
         if not os.path.exists(tmp_db):
-            if os.path.exists(ORIGINAL_DB_FILE):
-                import shutil
+            downloaded = download_db_from_vercel_blob(tmp_db, force=True)
+            if not downloaded and os.path.exists(ORIGINAL_DB_FILE):
                 try:
                     shutil.copy2(ORIGINAL_DB_FILE, tmp_db)
                 except Exception:
@@ -24,10 +100,19 @@ def get_db_path() -> str:
         return tmp_db
     return ORIGINAL_DB_FILE
 
+class AutoSyncConnection(sqlite3.Connection):
+    def commit(self):
+        super().commit()
+        if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or get_vercel_blob_token():
+            try:
+                sync_db_to_vercel_blob(get_db_path())
+            except Exception as e:
+                print(f"[AutoSyncConnection] [NOTICE] {e}")
+
 def get_connection() -> sqlite3.Connection:
-    """Creates a thread-safe connection with PRAGMA foreign_keys enforced."""
+    """Creates a thread-safe connection with PRAGMA foreign_keys enforced and Vercel cloud sync."""
     target_db = get_db_path()
-    conn = sqlite3.connect(target_db, timeout=30.0, check_same_thread=False)
+    conn = sqlite3.connect(target_db, timeout=30.0, check_same_thread=False, factory=AutoSyncConnection)
     conn.row_factory = sqlite3.Row
     try:
         conn.execute("PRAGMA foreign_keys = ON;")
@@ -38,6 +123,7 @@ def get_connection() -> sqlite3.Connection:
     except Exception:
         pass
     return conn
+
 
 
 # ----------------------------------------------------------------------------

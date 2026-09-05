@@ -110,9 +110,13 @@ class TestAdminPanelComplete(unittest.TestCase):
 
         # 1. Create video
         genres = db.get_genres()
-        artists = db.get_artists()
+        artists = db.get_artists(only_with_tracks=False)
         g_id = genres[0]["id"] if genres else 1
-        a_id = artists[0]["id"] if artists else 1
+        if not artists:
+            art = db.create_artist("Test Video Artist", "Bio", "")
+            a_id = art["id"]
+        else:
+            a_id = artists[0]["id"]
 
         v_res = self.client.post(
             "/api/admin/videos",
@@ -222,6 +226,15 @@ class TestAdminPanelComplete(unittest.TestCase):
         # Delete track (Cascade purge)
         del_res = self.client.delete(f"/api/tracks/{t_id}", cookies=cookies)
         self.assertEqual(del_res.status_code, 200)
+
+    def test_09_vercel_blob_status(self):
+        """Test Vercel Blob Status API Endpoint"""
+        login_res = self.client.post("/api/admin/login", json={"username": "admin", "password": "admin123"})
+        cookies = login_res.cookies
+        res = self.client.get("/api/admin/blob/status", cookies=cookies)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("provider", res.json())
+        self.assertEqual(res.json()["provider"], "Vercel Blob Storage")
 
 if __name__ == "__main__":
     unittest.main()

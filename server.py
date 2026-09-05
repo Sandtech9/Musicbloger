@@ -44,6 +44,40 @@ COVERS_DIR = get_writable_dir(os.path.join("media", "covers"))
 TEAM_DIR = get_writable_dir(os.path.join("media", "team"))
 TEMP_DIR = get_writable_dir(os.path.join("media", "temp"))
 
+import json
+import urllib.request
+import urllib.parse
+
+def upload_to_vercel_blob(file_bytes: bytes, filename: str, content_type: str = "application/octet-stream") -> Optional[str]:
+    """Uploads file bytes directly to Vercel Blob object storage via REST API."""
+    token = os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()
+    if not token:
+        return None
+    
+    clean_filename = urllib.parse.quote(os.path.basename(filename))
+    url = f"https://blob.vercel-storage.com/{clean_filename}"
+    
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "x-api-version": "7",
+        "x-content-type": content_type,
+        "x-add-random-suffix": "1"
+    }
+    
+    try:
+        req = urllib.request.Request(url, data=file_bytes, headers=headers, method="PUT")
+        with urllib.request.urlopen(req, timeout=40) as resp:
+            if resp.status in (200, 201):
+                res_data = json.loads(resp.read().decode("utf-8"))
+                blob_url = res_data.get("url")
+                if blob_url:
+                    print(f"[Vercel Blob] [OK] Successfully stored '{filename}' -> {blob_url}")
+                    return blob_url
+    except Exception as e:
+        print(f"[Vercel Blob] [WARN] Upload failed for '{filename}': {e}")
+        return None
+    return None
+
 SESSION_STORE: Dict[str, str] = {}
 
 @asynccontextmanager
@@ -308,7 +342,9 @@ async def upload_site_logo(
     with open(logo_path, "wb") as f:
         f.write(content)
         
-    logo_url_result = f"/media/covers/{logo_filename}"
+    mime = file.content_type or mimetypes.guess_type(file.filename)[0] or "image/png"
+    blob_url = upload_to_vercel_blob(content, logo_filename, content_type=mime)
+    logo_url_result = blob_url or f"/media/covers/{logo_filename}"
     updated = db.update_site_settings({"logo_url": logo_url_result})
     return {"success": True, "logo_url": logo_url_result, "settings": updated}
 
@@ -398,7 +434,9 @@ async def create_team_member_endpoint(
             file_disk_path = os.path.join(TEAM_DIR, filename)
             with open(file_disk_path, "wb") as f:
                 f.write(content)
-            photo_path = f"/media/team/{filename}"
+            mime = photo.content_type or mimetypes.guess_type(photo.filename)[0] or "image/jpeg"
+            blob_url = upload_to_vercel_blob(content, filename, content_type=mime)
+            photo_path = blob_url or f"/media/team/{filename}"
     
     member = db.create_team_member(
         name=name,
@@ -441,7 +479,9 @@ async def update_team_member_endpoint(
             file_disk_path = os.path.join(TEAM_DIR, filename)
             with open(file_disk_path, "wb") as f:
                 f.write(content)
-            new_photo_path = f"/media/team/{filename}"
+            mime = photo.content_type or mimetypes.guess_type(photo.filename)[0] or "image/jpeg"
+            blob_url = upload_to_vercel_blob(content, filename, content_type=mime)
+            new_photo_path = blob_url or f"/media/team/{filename}"
 
             # If old photo was a custom uploaded image, delete from disk
             old_path = existing.get("photo_path") or ""
@@ -730,9 +770,9 @@ async def upload_audio_track(
             target_filename = f"{sha256_hash}{ext}"
             storage_path = os.path.join(MEDIA_DIR, target_filename)
 
+            file_bytes = b"".join(content_chunks)
             with open(storage_path, "wb") as out_file:
-                for chunk in content_chunks:
-                    out_file.write(chunk)
+                out_file.write(file_bytes)
 
             id3_meta = metadata_extractor.extract_audio_metadata(storage_path, original_filename=file.filename)
 
@@ -747,7 +787,9 @@ async def upload_audio_track(
                         c_path = os.path.join(COVERS_DIR, c_filename)
                         with open(c_path, "wb") as f:
                             f.write(c_content)
-                        uploaded_cover_url = f"/media/covers/{c_filename}"
+                        c_mime = cover_file.content_type or mimetypes.guess_type(cover_file.filename)[0] or "image/jpeg"
+                        c_blob_url = upload_to_vercel_blob(c_content, c_filename, content_type=c_mime)
+                        uploaded_cover_url = c_blob_url or f"/media/covers/{c_filename}"
 
             final_title = (title or "").strip() or id3_meta.get("title") or os.path.splitext(file.filename)[0]
             final_artist = (artist or "").strip() or id3_meta.get("artist") or "Unknown Artist"
@@ -761,13 +803,16 @@ async def upload_audio_track(
 
             mime_type = file.content_type or mimetypes.guess_type(file.filename)[0] or "audio/mpeg"
 
+            blob_audio_url = upload_to_vercel_blob(file_bytes, target_filename, content_type=mime_type)
+            final_storage_path = blob_audio_url or storage_path
+
             new_track = db.create_track(
                 title=final_title,
                 artist_name=final_artist,
                 genre_name=final_genre,
                 duration_seconds=final_duration,
                 file_name=file.filename,
-                storage_path=storage_path,
+                storage_path=final_storage_path,
                 file_size_bytes=total_size,
                 mime_type=mime_type,
                 sha256_hash=sha256_hash,
@@ -799,7 +844,9 @@ async def upload_audio_track(
                     c_path = os.path.join(COVERS_DIR, c_filename)
                     with open(c_path, "wb") as f:
                         f.write(c_content)
-                    uploaded_cover_url = f"/media/covers/{c_filename}"
+                    c_mime = cover_file.content_type or mimetypes.guess_type(cover_file.filename)[0] or "image/jpeg"
+                    c_blob_url = upload_to_vercel_blob(c_content, c_filename, content_type=c_mime)
+                    uploaded_cover_url = c_blob_url or f"/media/covers/{c_filename}"
 
         url_path = urllib.parse.urlparse(clean_url).path
         url_filename = os.path.basename(url_path) or "audio.mp3"
@@ -833,8 +880,42 @@ async def upload_audio_track(
 
         return {"success": True, "track": new_track, "id3_extracted": False}
 
-    else:
-        raise HTTPException(status_code=400, detail="Please select an audio file to upload OR provide a Direct Audio File URL.")
+    raise HTTPException(status_code=400, detail="Provide an audio file or remote URL.")
+
+# ----------------------------------------------------------------------------
+# Vercel Blob Direct Operations REST Endpoints
+# ----------------------------------------------------------------------------
+@app.get("/api/admin/blob/status")
+async def get_blob_status(admin: str = Depends(require_admin)):
+    token = os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()
+    return {
+        "configured": bool(token),
+        "status": "active" if token else "unconfigured",
+        "provider": "Vercel Blob Storage",
+        "read_write_token_present": bool(token)
+    }
+
+@app.post("/api/admin/blob/upload")
+async def standalone_blob_upload(
+    file: UploadFile = File(...),
+    admin: str = Depends(require_admin)
+):
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+
+    mime_type = file.content_type or mimetypes.guess_type(file.filename)[0] or "application/octet-stream"
+    blob_url = upload_to_vercel_blob(content, file.filename, content_type=mime_type)
+    if not blob_url:
+        raise HTTPException(status_code=400, detail="Vercel Blob upload failed or BLOB_READ_WRITE_TOKEN not configured.")
+
+    return {
+        "success": True,
+        "url": blob_url,
+        "filename": file.filename,
+        "size": len(content),
+        "mime_type": mime_type
+    }
 
 @app.put("/api/tracks/{track_id}")
 @app.put("/api/admin/media/{track_id}")

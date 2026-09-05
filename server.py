@@ -52,10 +52,11 @@ def upload_to_vercel_blob(file_bytes: bytes, filename: str, content_type: str = 
     """Uploads file bytes directly to Vercel Blob object storage via REST API."""
     token = os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()
     if not token:
+        print("[Vercel Blob] [NOTICE] BLOB_READ_WRITE_TOKEN is not set in environment variables.")
         return None
     
     clean_filename = urllib.parse.quote(os.path.basename(filename))
-    url = f"https://blob.vercel-storage.com/{clean_filename}"
+    url = f"https://blob.vercel-storage.com/{clean_filename}?access=public"
     
     headers = {
         "Authorization": f"Bearer {token}",
@@ -73,6 +74,10 @@ def upload_to_vercel_blob(file_bytes: bytes, filename: str, content_type: str = 
                 if blob_url:
                     print(f"[Vercel Blob] [OK] Successfully stored '{filename}' -> {blob_url}")
                     return blob_url
+    except urllib.error.HTTPError as he:
+        err_body = he.read().decode("utf-8", errors="ignore")
+        print(f"[Vercel Blob] [ERROR {he.code}] Upload failed for '{filename}': {err_body}")
+        return None
     except Exception as e:
         print(f"[Vercel Blob] [WARN] Upload failed for '{filename}': {e}")
         return None

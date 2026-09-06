@@ -89,16 +89,15 @@ def upload_to_vercel_blob(file_bytes: bytes, filename: str, content_type: str = 
 
 SESSION_STORE: Dict[str, str] = {}
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+# Direct Unconditional DB Initialization for WSGI & Serverless
+try:
     db.init_db()
-    print("[Zedhits Engine] [OK] Database initialized, foreign keys, analytics & dynamic CMS enabled.")
-    yield
+except Exception as _db_err:
+    print(f"[Zedhits Engine] [NOTICE] Init DB: {_db_err}")
 
 app = FastAPI(
     title="Zedhits Enterprise Music Ecosystem & CMS",
-    version="3.5.0",
-    lifespan=lifespan
+    version="3.5.0"
 )
 
 app.add_middleware(

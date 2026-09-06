@@ -1598,6 +1598,8 @@ async def index_page(
 
             feat_suffix = f" ft. {t['featured_artists']}" if t.get('featured_artists') else ""
             artist_full = f"{t['artist']}{feat_suffix}"
+            t_title_clean = t['title'].replace("'", "\\'")
+            artist_full_clean = artist_full.replace("'", "\\'")
 
             post_cards_html += f"""
             <article class="zp-post-item" data-title="{t['title']}" data-artist="{artist_full}">
@@ -1615,7 +1617,7 @@ async def index_page(
                         <a href="/track/{t['id']}">{artist_full} – {t['title']}</a>
                     </h3>
                     <div class="zp-post-actions">
-                        <button class="zp-btn-play-trigger" onclick="playTrack({t['id']}, '{t['title'].replace("'", "\\'")}', '{artist_full.replace("'", "\\'")}', '{t_art}', '{t['stream_url']}')">
+                        <button class="zp-btn-play-trigger" onclick="playTrack({t['id']}, '{t_title_clean}', '{artist_full_clean}', '{t_art}', '{t['stream_url']}')">
                             <i class="fas fa-play"></i> Play
                         </button>
                         {dl_btn_html}
